@@ -1,0 +1,4188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control de Tiempo + Planner</title>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ESTILOS UNIFICADOS */
+    :root {
+      /* Colores principales */
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --accent: #2ecc71;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --info: #9b59b6;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+      --bg: #f5f6fa;
+      --muted: #e9ecef;
+      --card: #fff;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: var(--dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* HEADER Y NAVEGACIÓN */
+    .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .app-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .nav-btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .nav-btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    .nav-btn-info {
+      background: var(--info);
+      color: white;
+    }
+    
+    .nav-btn-warning {
+      background: #f39c12;
+      color: white;
+    }
+    
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* CONTENEDOR PRINCIPAL */
+    .main-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* SECCIONES */
+    .section {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .section.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* ESTILOS COMUNES PARA TARJETAS */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    
+    /* ===== ESTILOS PARA CONTROL DE TIEMPO ===== */
+    .time-control-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .time-control-section h1 {
+      text-align: center;
+      color: var(--primary);
+      margin: 0 0 20px;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+    }
+    
+    .time-control-section label {
+      display: block;
+      margin-top: 8px;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+    
+    .time-control-section input, 
+    .time-control-section select, 
+    .time-control-section button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    
+    .time-control-section input:focus, 
+    .time-control-section select:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      align-items: end;
+      margin-top: 10px;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      min-height: 85px;
+    }
+    
+    .tiempo-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .tiempo-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    
+    .tiempo-input-group input {
+      flex: 1;
+      margin: 0;
+      min-width: 0;
+      height: 46px;
+      box-sizing: border-box;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+    
+    .tiempo-convertido {
+      background: var(--muted);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #ddd;
+      flex: 1;
+      min-width: 0;
+      height: 46px;
+      box-sizing: border-box;
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+    }
+    
+    .instrucciones-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .btn-instrucciones {
+      background: #9b59b6;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      height: 46px;
+      box-sizing: border-box;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    
+    .btn-instrucciones:hover {
+      background: #8e44ad;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+    }
+    
+    .btn-instrucciones:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .button-row button {
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+      padding: 12px 10px;
+      white-space: nowrap;
+      min-height: 50px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .button-row button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    #btnStart { background: #0984e3; color: white; } 
+    #btnTerminar { background: var(--danger); color: white; } 
+    #btnReset { background: var(--success); color: white; }
+    #btnSilenciar { background: #95a5a6; color: white; }
+    #btnEstadisticas { background: #16a085; color: white; }
+    #btnExportExcel { background: #27ae60; color: white; }
+    #btnResetTabla { background: #e74c3c; color: white; }
+    #btnAdminTareas { background: #3498db; color: white; }
+    
+    #cronometro {
+      background: var(--muted);
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      margin-top: 15px;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: bold;
+      box-shadow: var(--shadow);
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #excedido {
+      background: #ffeaa7;
+      color: #d63031;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-weight: 600;
+      text-align: center;
+      display: none;
+      border-left: 4px solid #d63031;
+    }
+    
+    .table-container {
+      margin-top: 15px;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 12px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: var(--shadow);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      font-size: clamp(0.8rem, 2vw, 0.93rem);
+    }
+    
+    th, td {
+      padding: 12px 10px;
+      border: 1px solid #e6e6e6;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    th {
+      background: #f1f2f6;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    
+    .progreso-container {
+      margin-top: 15px;
+      background: var(--muted);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    
+    .progreso-bar {
+      width: 100%;
+      height: 28px;
+      background: #f1f2f6;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progreso-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #27ae60);
+      border-radius: 14px;
+      transition: width 0.3s ease, background 0.3s ease;
+      width: 0%;
+    }
+    
+    .progreso-fill.excedido {
+      background: linear-gradient(90deg, var(--danger), #c0392b);
+    }
+    
+    .progreso-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: 600;
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+      color: var(--primary);
+      pointer-events: none;
+    }
+    
+    .diff-plus { color: var(--success); font-weight: 700; }
+    .diff-minus { color: var(--danger); font-weight: 700; }
+    
+    #floatingTotal {
+      position: sticky;
+      left: 0;
+      bottom: 0;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+      z-index: 1001;
+      font-weight: 700;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+      border: 2px solid var(--success);
+      font-size: clamp(1rem, 2.5vw, 1.1rem);
+    }
+    
+    /* FILTROS */
+    .filtros-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .filtro-item label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .filtro-item input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    
+    .filtro-item.limpiar label {
+      opacity: 0;
+    }
+    
+    .filtro-item.limpiar button {
+      width: 100%;
+      padding: 12px;
+      background: #95a5a6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    /* ===== ESTILOS PARA ADMINISTRADOR DE TAREAS ===== */
+    .admin-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    /* HEADER DEL ADMIN */
+    .admin-header {
+      background: linear-gradient(135deg, var(--primary), #1a2530);
+      color: white;
+      padding: 30px;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .admin-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(52, 152, 219, 0.15));
+      border-radius: 50%;
+      transform: translate(60px, -60px);
+    }
+    
+    .admin-header h1 {
+      font-size: 2rem;
+      margin: 0 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .admin-subtitle {
+      color: rgba(255,255,255,0.85);
+      font-size: 1rem;
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+    }
+    
+    /* CONTENEDORES DE FORMULARIO Y LISTA */
+    .admin-content-container {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .form-container, .list-container {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .form-container {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+      border: 1px solid #e1e8ed;
+    }
+    
+    .list-container {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+      border: 1px solid #e1e8ed;
+      height: auto;           /* Asegura que la altura sea automática */
+  min-height: auto;       /* Elimina cualquier altura mínima */
+  overflow: visible;      /* Asegura que no haya scroll */
+      
+    }
+    
+    /* FORMULARIO */
+    .form-section-title {
+      font-size: 1.3rem;
+      color: var(--primary);
+      margin: 25px 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f3f8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .admin-form-group {
+      margin-bottom: 20px;
+    }
+    
+    .admin-form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+    
+    .admin-form-group input, 
+    .admin-form-group select, 
+    .admin-form-group textarea {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: var(--transition);
+      background: #f8fafc;
+    }
+    
+    .admin-form-group input:focus, 
+    .admin-form-group select:focus, 
+    .admin-form-group textarea:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+      background: white;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .form-row .admin-form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    
+    /* ELEMENTOS DE ARRAY (AHORA UNIFICADOS CON EL ESTILO DEL FORMULARIO) */
+    .array-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .array-item {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #e1e8ed;
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .array-item:hover {
+      border-color: var(--secondary);
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .array-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .array-header h4 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    
+    .btn-small:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+    
+    .btn-add {
+      background: linear-gradient(135deg, var(--accent), #27ae60);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .btn-add:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3);
+    }
+    
+    /* LISTA DE TAREAS */
+    .tareas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f3f8;
+    }
+    
+    .tareas-header h3 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 1.4rem;
+    }
+    
+    .search-box {
+      padding: 12px 18px;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      width: 250px;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+    
+    .search-box:focus {
+      outline: none;
+      border-color: var(--secondary);
+    }
+    
+    .tareas-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      height: auto;           /* Altura automática */
+  overflow: visible;      /* Sin scroll */
+ 
+      padding-right: 5px;
+    }
+    
+    .tarea-item {
+      background: white;
+      border: 2px solid #e1e8ed;
+      border-radius: 12px;
+      padding: 20px;
+      transition: var(--transition);
+      animation: fadeIn 0.3s ease;
+      position: relative;
+    }
+    
+    .tarea-item:hover {
+      border-color: var(--secondary);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    
+    .tarea-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .tarea-info {
+      flex: 1;
+    }
+    
+    .tarea-nombre {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+    
+    .tarea-tipo {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: white;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    .tarea-tipo.dc3 { background: linear-gradient(135deg, var(--accent), #27ae60); }
+    .tarea-tipo.ms3 { background: linear-gradient(135deg, var(--danger), #c0392b); }
+    .tarea-tipo.personalizada { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+    
+    .tarea-acciones {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn-edit, .btn-delete, .btn-view {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    
+    .btn-edit {
+      background: linear-gradient(135deg, var(--secondary), #2980b9);
+      color: white;
+    }
+    
+    .btn-delete {
+      background: linear-gradient(135deg, var(--danger), #c0392b);
+      color: white;
+    }
+    
+    .btn-view {
+      background: linear-gradient(135deg, var(--info), #8e44ad);
+      color: white;
+    }
+    
+    .tarea-detalles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .tarea-detalle-item {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .tarea-detalle-item strong {
+      color: var(--primary);
+      display: block;
+      margin-bottom: 3px;
+    }
+    
+    /* BOTONES DE ACCIÓN */
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f3f8;
+    }
+    
+    .form-actions button {
+      flex: 1;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition);
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-guardar {
+      background: linear-gradient(135deg, var(--accent), #27ae60);
+      color: white;
+    }
+    
+    .btn-limpiar {
+      background: linear-gradient(135deg, var(--warning), #e67e22);
+      color: white;
+    }
+    
+    /* ESTILOS PARA SECCIÓN DE INSTRUCCIONES */
+    .instrucciones-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .instrucciones-header {
+      background: linear-gradient(135deg, var(--info), #8e44ad);
+      color: white;
+      padding: 30px;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .instrucciones-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .instruccion-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid #e1e8ed;
+    }
+    
+    .instruccion-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .instruccion-card-header {
+      background: #f8fafc;
+      padding: 20px;
+      border-bottom: 1px solid #e1e8ed;
+    }
+    
+    .instruccion-card-body {
+      padding: 20px;
+    }
+    
+    .instruccion-meta {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85rem;
+      color: #7f8c8d;
+    }
+    
+    .instruccion-summary {
+      color: #666;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    
+    .instruccion-stats {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85rem;
+      color: #7f8c8d;
+    }
+    
+    /* BÚSQUEDA DE INSTRUCCIONES */
+    .search-container {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    
+    .search-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .search-input-group input {
+      flex: 1;
+      padding: 12px 18px;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    
+    .search-filters {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-select {
+      padding: 10px 15px;
+      border: 2px solid #e1e8ed;
+      border-radius: 8px;
+      background: white;
+      min-width: 150px;
+    }
+    
+    /* ===== ESTILOS PARA PLANNER DE TAREAS ===== */
+    .planner-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .planner-header {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      color: white;
+      padding: 30px;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .planner-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr;
+      gap: 25px;
+    }
+    
+    @media (max-width: 900px) {
+      .planner-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .planner-seleccion-card, .planner-materiales-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+    }
+    
+    .planner-filtros {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    
+    .planner-filtro-item {
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .planner-filtro-item label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 0.9rem;
+    }
+    
+    .planner-item-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: flex-end;
+    }
+    
+    .planner-item-select {
+      flex: 2;
+    }
+    
+    .planner-item-cantidad {
+      flex: 1;
+    }
+    
+    .planner-item-boton {
+      flex: 0.5;
+      margin-bottom: 2px;
+    }
+    
+    .btn-remove {
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      width: 100%;
+      transition: var(--transition);
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn-remove:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+    
+    .btn-agregar-fila {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    
+    .btn-calcular {
+      background: linear-gradient(135deg, var(--accent), #27ae60);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .btn-excel-planner {
+      background: linear-gradient(135deg, #16a085, #1e6f5c);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    
+    .materiales-lista {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .material-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .material-item:last-child {
+      border-bottom: none;
+    }
+    
+    .material-info {
+      flex: 1;
+    }
+    
+    .material-nombre {
+      font-size: 0.85rem;
+      color: var(--primary);
+    }
+    
+    .material-descripcion {
+      font-size: 0.85rem;
+      color: #7f8c8d;
+    }
+    
+    .material-cantidad {
+      background: var(--muted);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .total-materiales {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    /* ESTILOS COMPARTIDOS */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      display: none;
+      z-index: 1000;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: #7f8c8d;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      color: #bdc3c7;
+    }
+    
+    .empty-state h4 {
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    
+    /* MODALES */
+   /* MODALES - Modificado para eliminar scroll */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.95);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Evita scroll en el overlay */
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%; /* Reducido para mejor visualización */
+  max-width: 800px; /* Ancho máximo fijo */
+  max-height: 90vh; /* Altura máxima relativa a la ventana */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Importante: oculta el scroll */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  margin: 20px; /* Margen de seguridad */
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--primary);
+  color: white;
+  flex-shrink: 0; /* Evita que el header se encoja */
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%; /* Evita que el título desborde */
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s;
+  flex-shrink: 0; /* Evita que el botón se encoja */
+}
+
+.close-modal:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto; /* Mantiene scroll interno si es necesario */
+  flex: 1;
+  background: #f8f9fa;
+  max-height: calc(90vh - 80px); /* Ajusta la altura restando el header */
+}
+
+/* Ajustes para el contenido dentro del modal-body */
+.modal-body > div {
+  max-width: 100%;
+  overflow-x: hidden; /* Evita scroll horizontal */
+}
+
+/* Ajustes específicos para las tarjetas de materiales en el modal */
+.modal-body .material-item {
+  margin-bottom: 10px;
+  word-wrap: break-word; /* Permite que el texto largo se divida */
+  overflow-wrap: break-word;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+    margin: 10px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.2rem;
+    white-space: normal; /* Permite que el título se divida en móviles */
+    line-height: 1.3;
+  }
+  
+  .modal-body {
+    padding: 15px;
+    max-height: calc(95vh - 70px);
+  }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  .modal-body {
+    max-height: calc(100vh - 60px);
+  }
+}
+    
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .admin-content-container {
+        flex-direction: column;
+      }
+      
+      .form-container, .list-container {
+        width: 100%;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .app-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+      
+      .app-nav {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      .nav-btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+      }
+      
+      .main-container {
+        padding: 15px 10px;
+      }
+      
+      .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .tiempo-input-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .button-row {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+      }
+      
+      .tarea-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      
+      .tarea-acciones {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+      
+      .search-box {
+        width: 100%;
+        margin-top: 10px;
+      }
+      
+      .instrucciones-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .search-input-group {
+        flex-direction: column;
+      }
+      
+      .search-filters {
+        flex-direction: column;
+      }
+      
+      .filter-select {
+        width: 100%;
+      }
+    }
+    
+    /* SCROLLBAR PERSONALIZADO */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #2980b9, #27ae60);
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="app-header">
+    <nav class="app-nav">
+      <button class="nav-btn nav-btn-primary" id="btnControlTiempo">
+        <i class="fas fa-stopwatch"></i>
+        Control de Tiempo
+      </button>
+      <button class="nav-btn nav-btn-secondary" id="btnInstruccionesSeccion">
+        <i class="fas fa-book"></i>
+        Instrucciones
+      </button>
+      <button class="nav-btn nav-btn-info" id="btnAdminTareas">
+        <i class="fas fa-tasks"></i>
+        Administrador 
+      </button>
+      <button class="nav-btn nav-btn-warning" id="btnPlannerTareas">
+        <i class="fas fa-clipboard-list"></i>
+        Planner
+      </button>
+    </nav>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="main-container">
+    <!-- ===== SECCIÓN CONTROL DE TIEMPO ===== -->
+    <section id="control-tiempo" class="section active time-control-section">
+      <div style="background: linear-gradient(135deg, var(--accent), #1a2530); color: white !important; padding: 30px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(52, 152, 219, 0.15)); border-radius: 50%; transform: translate(60px, -60px);"></div>
+        <h1 style="font-size: 2rem; margin: 0 0 10px 0; display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; color: white !important; text-align: left !important; font-weight: 700;">
+          <i class="fas fa-stopwatch" style="color: white !important;"></i>
+          Control de Tiempo
+        </h1>
+        <p style="color: rgba(255,255,255,0.85) !important; font-size: 1rem; margin: 0; position: relative; z-index: 1; max-width: 600px; text-align: left !important; font-weight: 400;">
+          Gestiona y registra el tiempo de tus tareas de producción
+        </p>
+      </div>
+      
+      <div class="card">
+        <label for="inpOperacion">N° de Orden</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input id="inpOperacion" placeholder="Ej: 123456" style="flex: 1;">
+          <button id="btnLimpiarOperacion" style="padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 10px; cursor: pointer; width: 46px;" title="Limpiar número de operación">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="controls-grid">
+          <div class="control-group">
+            <label for="selTipo" style="margin-bottom: 5px;">Tipo</label>
+            <select id="selTipo">
+              <option value="">— Selecciona tipo —</option>
+              <option value="DC3">DC3</option>
+              <option value="MS3">MS3</option>
+              <option value="Personalizada">Personalizada</option>
+            </select>
+          </div>
+          
+          <div class="control-group">
+            <label for="selTarea" style="margin-bottom: 5px;">Tarea</label>
+            <select id="selTarea">
+              <option value="">— Elige tipo primero —</option>
+            </select>
+            <div id="divPersonalizada" style="display:none;margin-top:8px">
+              <input id="inpNombrePersonalizado" placeholder="Nombre de tarea...">
+            </div>
+          </div>
+          
+          <div class="control-group tiempo-group">
+            <label for="inpTiempo" style="margin-bottom: 5px;">Tiempo estimado (horas)</label>
+            <div class="tiempo-input-group">
+              <input id="inpTiempo" type="number" step="0.01" min="0" placeholder="Ej: 1.50">
+              <div id="minutosConvertidos" class="tiempo-convertido">00:00:00</div>
+            </div>
+          </div>
+          
+          <div class="control-group instrucciones-group">
+            <label for="btnVerInstrucciones" style="margin-bottom: 5px;">&nbsp;</label>
+            <button id="btnVerInstrucciones" class="btn-instrucciones" disabled>
+              <i class="fas fa-book-open"></i>
+              Ver Instrucciones
+            </button>
+          </div>
+        </div>
+        
+        <div id="cronometro">00:00:00</div>
+        <div id="excedido">-00:00:00 excedido</div>
+        
+        <div class="progreso-container">
+          <div class="progreso-bar">
+            <div class="progreso-fill" id="progresoFill"></div>
+            <div class="progreso-text" id="progresoText">0%</div>
+          </div>
+        </div>
+        
+        <div class="button-row">
+          <button id="btnStart"><i class="fas fa-play"></i> Iniciar</button>
+          <button id="btnTerminar" disabled><i class="fas fa-stop"></i> Terminar</button>
+          <button id="btnReset"><i class="fas fa-redo"></i> Reiniciar</button>
+          <button id="btnSilenciar"><i class="fas fa-volume-up"></i> Silenciar</button>
+          <button id="btnEstadisticas"><i class="fas fa-chart-bar"></i> Estadísticas</button>
+          <button id="btnResetTabla"><i class="fas fa-trash"></i> Resetear</button>
+        </div>
+        
+        <div class="filtros-container">
+          <div class="filtro-item">
+            <label for="filtroFecha">Filtrar por fecha</label>
+            <input id="filtroFecha" type="date">
+          </div>
+          <div class="filtro-item">
+            <label for="filtroOperacion">Filtrar por Nº de Operación</label>
+            <input id="filtroOperacion" placeholder="Ej: 123456">
+          </div>
+          <div class="filtro-item limpiar">
+            <label for="filtroLimpiar">&nbsp;</label>
+            <button id="filtroLimpiar"><i class="fas fa-broom"></i> Limpiar filtros</button>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table id="tabla">
+            <thead>
+              <tr>
+                <th>Nº Operación</th>
+                <th>Tipo</th>
+                <th>Tarea</th>
+                <th>Estimado</th>
+                <th>Tiempo Real</th>
+                <th>Diferencia</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        
+        <div id="floatingTotal">
+          <div>Total día:</div>
+          <div id="floatingTotalValue" style="min-width:120px;text-align:center;color:var(--success)">+00:00:00</div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ===== SECCIÓN INSTRUCCIONES ===== -->
+    <section id="instrucciones" class="section instrucciones-section">
+      <div style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white !important; padding: 30px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(155,89,182,0.15)); border-radius: 50%; transform: translate(60px, -60px);"></div>
+        <h1 style="font-size: 2rem; margin: 0 0 10px 0; display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; color: white !important; text-align: left !important; font-weight: 700;">
+          <i class="fas fa-book" style="color: white !important;"></i>
+          Instrucciones
+        </h1>
+        <p style="color: rgba(255,255,255,0.85) !important; font-size: 1rem; margin: 0; position: relative; z-index: 1; max-width: 600px; text-align: left !important; font-weight: 400;">
+          Consulta las instrucciones detalladas, materiales y herramientas de cada tarea
+        </p>
+      </div>
+      
+      <div class="search-container">
+        <div class="search-input-group"> 
+          <input type="text" id="searchInstrucciones" placeholder="Buscar tarea por nombre..." class="search-box">
+          <button id="btnBuscarInstrucciones" class="btn-add" style="width: auto; padding: 12px 20px;">
+            <i class="fas fa-search"></i> Buscar
+          </button>
+        </div>
+        
+        <div class="search-filters">
+          <select id="filterTipoInstrucciones" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="DC3">DC3</option>
+            <option value="MS3">MS3</option>
+            <option value="Personalizada">Personalizada</option>
+          </select>
+          
+          <button id="btnLimpiarBusqueda" class="btn-small" style="background: #95a5a6;">
+            <i class="fas fa-times"></i> Limpiar filtros
+          </button>
+        </div>
+      </div>
+      
+      <div id="instruccionesLista" class="instrucciones-grid">
+        <!-- Las instrucciones se cargarán aquí dinámicamente -->
+      </div>
+      
+      
+    </section>
+    
+    <!-- ===== SECCIÓN ADMINISTRADOR DE TAREAS ===== -->
+    <section id="admin-tareas" class="section admin-section">
+      <div style="background: linear-gradient(135deg, #3498db, #2980b9); color: white !important; padding: 30px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(52,152,219,0.15)); border-radius: 50%; transform: translate(60px, -60px);"></div>
+        <h1 style="font-size: 2rem; margin: 0 0 10px 0; display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; color: white !important; text-align: left !important; font-weight: 700;">
+          <i class="fas fa-tasks" style="color: white !important;"></i>
+          Administrador de Tareas
+        </h1>
+        <p style="color: rgba(255,255,255,0.85) !important; font-size: 1rem; margin: 0; position: relative; z-index: 1; max-width: 600px; text-align: left !important; font-weight: 400;">
+          Gestiona, crea y edita todas las tareas con sus instrucciones, materiales y herramientas
+        </p>
+      </div>
+      
+      <div class="admin-content-container">
+        <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+        <div class="form-container">
+          <div class="tareas-header">
+            <h3>
+              <i class="fas fa-edit"></i>
+              Formulario de Tarea
+            </h3>
+            
+          </div>
+          
+          <div class="admin-form-group">
+            <label for="tareaNombre">
+              Nombre de la Tarea *
+            </label>
+            <input type="text" id="tareaNombre" placeholder="Ej: Bandeja AT Derecha">
+          </div>
+          
+          <div class="form-row">
+            <div class="admin-form-group">
+              <label for="tareaTipo">
+                
+                Tipo de Tarea *
+              </label>
+              <select id="tareaTipo">
+                <option value="">— Selecciona tipo —</option>
+                <option value="DC3">DC3</option>
+                <option value="MS3">MS3</option>
+                <option value="Personalizada">Personalizada</option>
+              </select>
+            </div>
+            
+            <div class="admin-form-group">
+              <label for="tareaTiempo">
+               
+                Tiempo Estimado *
+              </label>
+              <input type="number" id="tareaTiempo" step="0.01" min="0" placeholder="Ej: 1.27">
+            </div>
+          </div>
+          
+          <div class="admin-form-group">
+            <label for="tareaTitulo">
+              
+              Título Descriptivo *
+            </label>
+            <input type="text" id="tareaTitulo" placeholder="Ej: Instalación Bandeja AT">
+          </div>
+          
+          <!-- Elementos Críticos (ahora con estilo unificado) -->
+     <h4 class="form-section-title" style="margin-top: 30px; margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
+        Elementos Críticos
+      </h4>
+      
+      <div id="criticosContainer">
+        <!-- Los elementos críticos se añadirán aquí dinámicamente -->
+      </div>
+      
+      <button type="button" class="btn-add" id="btnAddCritico" style="margin: 10px 0 20px 0;">
+        <i class="fas fa-plus-circle"></i>
+        Añadir Elemento Crítico
+      </button>
+          <!-- Materiales Necesarios (ahora con estilo unificado) -->
+          <h4 class="form-section-title">
+            <i class="fas fa-box-open" style="color: #3498db;"></i>
+            Materiales Necesarios
+          </h4>
+          <div id="materialesContainer" class="array-items-container"></div>
+          <button type="button" class="btn-add" id="btnAddMaterial">
+            <i class="fas fa-plus-circle"></i>
+            Añadir Material
+          </button>
+          
+          <!-- Herramientas (ahora con estilo unificado) -->
+          <h4 class="form-section-title">
+            <i class="fas fa-tools" style="color: #f39c12;"></i>
+            Herramientas
+          </h4>
+          <div id="herramientasContainer" class="array-items-container"></div>
+          <button type="button" class="btn-add" id="btnAddHerramienta">
+            <i class="fas fa-plus-circle"></i>
+            Añadir Herramienta
+          </button>
+          
+          <div class="form-actions">
+            <button class="btn-guardar" id="btnGuardarTarea">
+              <i class="fas fa-save"></i>
+              Guardar Tarea
+            </button>
+            <button class="btn-limpiar" id="btnLimpiarFormulario">
+              <i class="fas fa-broom"></i>
+              Limpiar Formulario
+            </button>
+          </div>
+        </div>
+        
+        <!-- COLUMNA DERECHA: LISTA DE TAREAS -->
+        <div class="list-container">
+          <div class="tareas-header">
+            <h3>
+              <i class="fas fa-list"></i>
+              Tareas Guardadas
+            </h3>
+            <input type="text" id="searchTareas" class="search-box" placeholder="Buscar tarea...">
+          </div>
+          
+          
+          <div id="tareasLista" class="tareas-lista">
+            <!-- Las tareas se cargarán aquí dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECCIÓN PLANNER DE TAREAS ===== -->
+    <section id="planner-tareas" class="section planner-section">
+      <div style="background: linear-gradient(135deg, #e67e22, #d35400); color: white !important; padding: 30px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(230,126,34,0.15)); border-radius: 50%; transform: translate(60px, -60px);"></div>
+        <h1 style="font-size: 2rem; margin: 0 0 10px 0; display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; color: white !important; text-align: left !important; font-weight: 700;">
+          <i class="fas fa-clipboard-list" style="color: white !important;"></i>
+          Planner
+        </h1>
+        <p style="color: rgba(255,255,255,0.85) !important; font-size: 1rem; margin: 0; position: relative; z-index: 1; max-width: 600px; text-align: left !important; font-weight: 400;">
+          Planifica y calcula los materiales necesarios para tus tareas
+        </p>
+      </div>
+
+      <div class="planner-grid">
+        <!-- Columna izquierda: Selección de tareas con filtro -->
+        <div class="planner-seleccion-card">
+          <h3 style="color: var(--primary); margin-bottom: 20px;">
+            <i class="fas fa-tasks"></i>
+            Selección de Tareas
+          </h3>
+          
+          <!-- FILTRO POR TIPO -->
+          <div class="planner-filtros">
+            <div class="planner-filtro-item">
+              <label><i class="fas fa-filter"></i> Filtrar por tipo</label>
+              <select id="plannerFiltroTipo" class="filter-select" style="width: 100%;">
+                <option value="">Todos los tipos</option>
+                <option value="DC3">DC3</option>
+                <option value="MS3">MS3</option>
+                <option value="Personalizada">Personalizada</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="plannerItemsContainer">
+            <!-- Aquí se agregarán dinámicamente las filas de selección -->
+          </div>
+          
+          <button id="btnAgregarFilaPlanner" class="btn-agregar-fila">
+            <i class="fas fa-plus"></i>
+            Agregar otra tarea
+          </button>
+          
+          <button id="btnCalcularMateriales" class="btn-calcular">
+            <i class="fas fa-calculator"></i>
+            Calcular Materiales
+          </button>
+          
+          
+        </div>
+
+        <!-- Columna derecha: Materiales acumulados -->
+        <div class="planner-materiales-card">
+          <h3 style="color: var(--primary); margin-bottom: 20px;">
+            <i class="fas fa-boxes"></i>
+            Materiales Necesarios
+          </h3>
+          <div id="materialesAcumuladosLista" class="materiales-lista">
+            <div class="empty-state" style="padding: 30px 15px;">
+              <i class="fas fa-box-open"></i>
+              <h4>Sin materiales</h4>
+              <p>Selecciona tareas y calcula para ver los materiales</p>
+            </div>
+          </div>
+          <div id="totalMaterialesInfo" class="total-materiales" style="display: none;">
+            <span>Total de ítems distintos:</span>
+            <span id="totalItemsCount" style="background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px;">0</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL DE INSTRUCCIONES -->
+  <div id="modalInstrucciones" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitulo">
+          <i class="fas fa-book"></i>
+          Instrucciones de Tarea
+        </h2>
+        <button id="closeModal" class="close-modal">×</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+  
+  <!-- Toast de notificaciones -->
+  <div id="toast" class="toast"></div>
+  
+  <!-- Audios para alarmas -->
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+  <audio id="warningBeep" src="https://actions.google.com/sounds/v1/cartoon/cartoon_whistle.ogg" preload="auto"></audio>
+
+  <script>
+    // =============================================
+    // VARIABLES GLOBALES
+    // =============================================
+    let inicioMs = 0;
+    let rafId = null;
+    let tiempoEstandar = 0;
+    let silenciado = false;
+    let alerta10minMostrada = false;
+    let alerta5minMostrada = false;
+    let alertaExcedidoMostrada = false;
+    let modoPrueba = false;
+    let tareasGuardadas = {};
+    let tareaEditando = null;
+    let currentSection = 'control-tiempo';
+    let instruccionesActuales = null;
+    
+    // TAREAS BASE
+    const tareasBase = {
+      "Bandeja AT Derecha":1.27,
+      "Bandeja AT Izquierda":1.27,
+      "Contactor QA1200, QA2200":1.66,
+      "Contactor QA1240, QA2240":2.46,
+      "DCU":1.80,
+      "Contactor QB1240, QB2240, Transductores tensiones, condensador":2.11,
+      "Desmontar Calderería y Placa Conectores":2.31,
+      "Psus, Switch, Bombas":1.62,
+      "Premecanico Transductores Corriente Izquierdo":1.83,
+      "Premecanico Transductores Corriente Derecho":1.83,
+      "PreElectrico Transductores Corriente y BusBars":2.07,
+      "DC-LINK Superior e Inferior":2.19,
+      "Conexion SZ/KK y I/O":1.50
+    };
+
+    const tareasPredeterminadas = {
+      "Bandeja AT Derecha": {
+        tipo: "DC3",
+        titulo: "Instalación Bandeja AT Derecha",
+        tiempo: 1.5,
+        descripcion: "Instalación completa de la bandeja AT en el lado derecho del equipo",
+        elementosCriticos: [
+          {
+            titulo: "TORNILLOS DE ANCLAJE",
+            descripcion: "Verificar que los tornillos de anclaje sean de grado 8.8 o superior",
+            critico: true
+          }
+        ],
+        materiales: [
+          {
+            nombre: "Tornillos M8x40",
+            descripcion: "Tornillos de fijación grado 8.8",
+            cantidad: 6,
+            unidad: "unidades"
+          }
+        ],
+        herramientas: [
+          {
+            nombre: "Llave torque 25Nm",
+            descripcion: "Para apriete controlado de tornillos",
+            imagen: ""
+          }
+        ]
+      }
+    };
+  
+  // =============================================
+// FUNCIONES PARA NÚMERO DE OPERACIÓN PERSISTENTE
+// =============================================
+function guardarUltimaOperacion() {
+    const operacion = document.getElementById('inpOperacion')?.value.trim();
+    if (operacion) {
+        localStorage.setItem('ultimaOperacion', operacion);
+    }
+}
+
+function restaurarUltimaOperacion() {
+    const ultimaOperacion = localStorage.getItem('ultimaOperacion');
+    if (ultimaOperacion) {
+        const inpOperacion = document.getElementById('inpOperacion');
+        if (inpOperacion) {
+            inpOperacion.value = ultimaOperacion;
+        }
+    }
+}
+
+function limpiarOperacion() {
+    if (confirm('¿Limpiar el número de operación?')) {
+        document.getElementById('inpOperacion').value = '';
+        localStorage.removeItem('ultimaOperacion');
+        mostrarToast('🧹 Número de operación limpiado', 'info');
+    }
+}
+
+    // =============================================
+    // FUNCIONES DE NAVEGACIÓN
+    // =============================================
+    function mostrarSeccion(seccionId) {
+      document.getElementById(currentSection).classList.remove('active');
+      document.getElementById(seccionId).classList.add('active');
+      currentSection = seccionId;
+      
+      if (seccionId === 'control-tiempo') {
+        inicializarControlTiempo();
+      } else if (seccionId === 'instrucciones') {
+        inicializarInstrucciones();
+      } else if (seccionId === 'admin-tareas') {
+        inicializarAdminTareas();
+      } else if (seccionId === 'planner-tareas') {
+        inicializarPlanner();
+      }
+    }
+
+    // =============================================
+    // FUNCIONES COMPARTIDAS
+    // =============================================
+    function mostrarToast(mensaje, tipo = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = mensaje;
+      toast.style.display = 'block';
+      toast.style.background = tipo === 'error' ? 'var(--danger)' : 
+                               tipo === 'warning' ? 'var(--warning)' : 
+                               tipo === 'info' ? 'var(--info)' : 'var(--accent)';
+      
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    // =============================================
+    // FUNCIONES DE CONTROL DE TIEMPO
+    // =============================================
+    async function fillTareasForTipo(tipo) {
+      const selTarea = document.getElementById('selTarea');
+      if (!selTarea) return;
+      
+      selTarea.innerHTML = '';
+      const inpNombrePersonalizado = document.getElementById('inpNombrePersonalizado');
+      if (inpNombrePersonalizado) inpNombrePersonalizado.value = '';
+    
+      if(!tipo) {
+        selTarea.innerHTML = '<option value="">— Elige tipo primero —</option>';
+        const divPersonalizada = document.getElementById('divPersonalizada');
+        if (divPersonalizada) divPersonalizada.style.display = 'none';
+        selTarea.style.display = 'block';
+        actualizarBotonInstrucciones();
+        return;
+      }
+    
+      if(tipo === 'Personalizada') {
+        selTarea.style.display = 'none';
+        const divPersonalizada = document.getElementById('divPersonalizada');
+        if (divPersonalizada) divPersonalizada.style.display = 'block';
+        actualizarBotonInstrucciones();
+        return;
+      }
+    
+      const divPersonalizada = document.getElementById('divPersonalizada');
+      if (divPersonalizada) divPersonalizada.style.display = 'none';
+      selTarea.style.display = 'block';
+    
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '— Selecciona tarea —';
+      selTarea.appendChild(placeholder);
+    
+      const tareasInstrucciones = JSON.parse(localStorage.getItem('tareasInstrucciones') || '{}');
+      const tareasFiltradas = [];
+      
+      Object.entries(tareasInstrucciones).forEach(([nombre, tarea]) => {
+        if (tarea.tipo === tipo) {
+          tareasFiltradas.push({
+            nombre: nombre,
+            tiempo: tarea.tiempo,
+            tipo: tarea.tipo
+          });
+        }
+      });
+      
+      if (tareasFiltradas.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '— No hay tareas de este tipo —';
+        option.disabled = true;
+        selTarea.appendChild(option);
+      } else {
+        tareasFiltradas.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        
+        tareasFiltradas.forEach(tarea => {
+          const option = document.createElement('option');
+          option.value = tarea.nombre;
+          option.textContent = tarea.nombre;
+          option.setAttribute('data-tiempo', tarea.tiempo);
+          option.setAttribute('data-tipo', tarea.tipo);
+          selTarea.appendChild(option);
+        });
+      }
+      
+      actualizarBotonInstrucciones();
+    }
+    
+    function actualizarBotonInstrucciones() {
+      const tareaSeleccionada = document.getElementById('selTarea')?.value;
+      const btn = document.getElementById('btnVerInstrucciones');
+      if (btn) {
+        btn.disabled = !tareaSeleccionada;
+      }
+    }
+    
+    function formatear(ms) {
+      const t = Math.floor(Math.abs(ms)/1000);
+      const h = String(Math.floor(t/3600)).padStart(2,'0');
+      const m = String(Math.floor((t%3600)/60)).padStart(2,'0');
+      const s = String(t%60).padStart(2,'0');
+      return `${h}:${m}:${s}`;
+    }
+    
+    function convertDec(h) {
+      const t = Math.round(h*3600);
+      const hh = Math.floor(t/3600), mm = Math.floor((t%3600)/60), ss = t%60;
+      return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    }
+    
+    function msFromHHMMSS(hhmmss) {
+      const parts = (hhmmss||'00:00:00').split(':').map(x=>parseInt(x,10)||0);
+      return ((parts[0]*3600)+(parts[1]*60)+parts[2]) * 1000;
+    }
+    
+    function iniciarControlTiempo() {
+      const inpOperacion = document.getElementById('inpOperacion');
+      const selTipo = document.getElementById('selTipo');
+      const selTarea = document.getElementById('selTarea');
+      const inpTiempo = document.getElementById('inpTiempo');
+      
+      if(!inpOperacion?.value.trim()){ mostrarToast('Introduce Nº de Operación', 'error'); return; }
+      if(!selTipo?.value){ mostrarToast('Selecciona tipo', 'error'); return; }
+      if(selTipo.value !== 'Personalizada' && !selTarea?.value){ mostrarToast('Selecciona una tarea', 'error'); return; }
+      const v = parseFloat(inpTiempo?.value || 0);
+      if(isNaN(v) || v <= 0){ mostrarToast('Introduce un tiempo válido', 'error'); return; }
+      if(rafId) return;
+    
+      guardarUltimaOperacion();
+        
+      tiempoEstandar = v;
+      inicioMs = Date.now();
+      alerta10minMostrada = false;
+      alerta5minMostrada = false;
+      alertaExcedidoMostrada = false;
+      modoPrueba = false;
+    
+      const excedidoElem = document.getElementById('excedido');
+      if (excedidoElem) excedidoElem.style.display = 'none';
+      
+      const progresoFill = document.getElementById('progresoFill');
+      if (progresoFill) {
+        progresoFill.style.width = '0%';
+        progresoFill.classList.remove('excedido');
+      }
+      
+      const progresoText = document.getElementById('progresoText');
+      if (progresoText) progresoText.textContent = '0%';
+      
+      const btnStart = document.getElementById('btnStart');
+      if (btnStart) btnStart.disabled = true;
+      
+      const btnTerminar = document.getElementById('btnTerminar');
+      if (btnTerminar) btnTerminar.disabled = false;
+    
+      guardarTareaActiva();
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loopControlTiempo);
+      
+      mostrarToast('⏱ Tarea iniciada', 'success');
+    }
+    
+    async function terminarControlTiempo() {
+    if(!inicioMs) return;
+    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+
+    alerta10minMostrada = false;
+    alerta5minMostrada = false;
+    alertaExcedidoMostrada = false;
+    
+    const trans = Date.now() - inicioMs;
+    const estimMs = modoPrueba ? (tiempoEstandar * 1000) : (tiempoEstandar * 3600000);
+    const restante = estimMs - trans;
+    const signo = restante >= 0 ? '+' : '-';
+    const diferencia = formatear(Math.abs(restante));
+    
+    const oper = document.getElementById('inpOperacion')?.value.trim() || '';
+    const tipo = document.getElementById('selTipo')?.value || '';
+    const tareaNombre = tipo === 'Personalizada' ? 
+        (document.getElementById('inpNombrePersonalizado')?.value || 'Sin nombre') : 
+        (document.getElementById('selTarea')?.value || '');
+    
+    const tiempoEstimado = parseFloat(document.getElementById('inpTiempo')?.value) || tiempoEstandar;
+    
+    const tareaObj = {
+        operacion: oper,
+        tipo: tipo,
+        nombre: tareaNombre,
+        estimado: tiempoEstimado,
+        real: formatear(trans),
+        diferencia: diferencia,
+        signo: signo,
+        fecha: new Date().toISOString(),
+        estado: 'completada'
+    };
+    
+    console.log('💾 Guardando tarea:', tareaObj);
+    
+    // GUARDAR EN HISTORIAL LOCAL
+    const historialLocal = JSON.parse(localStorage.getItem('historial') || '[]');
+    historialLocal.push(tareaObj);
+    localStorage.setItem('historial', JSON.stringify(historialLocal));
+    
+    mostrarToast('✅ Tarea guardada localmente', 'success');
+    
+    borrarTareaActiva();
+    renderTabla();
+    
+    // Limpiar campos (PERO NO EL NÚMERO DE OPERACIÓN)
+    const selTipo = document.getElementById('selTipo');
+    if (selTipo) selTipo.value = '';
+    
+    const selTarea = document.getElementById('selTarea');
+    if (selTarea) selTarea.value = '';
+    
+    const inpNombrePersonalizado = document.getElementById('inpNombrePersonalizado');
+    if (inpNombrePersonalizado) inpNombrePersonalizado.value = '';
+    
+    const inpTiempo = document.getElementById('inpTiempo');
+    if (inpTiempo) inpTiempo.value = '';
+    
+    const minutosConvertidos = document.getElementById('minutosConvertidos');
+    if (minutosConvertidos) minutosConvertidos.textContent = '00:00:00';
+    
+    const btnInstrucciones = document.getElementById('btnVerInstrucciones');
+    if (btnInstrucciones) btnInstrucciones.disabled = true;
+    
+    // Reactivar botones
+    const btnStart = document.getElementById('btnStart');
+    if (btnStart) btnStart.disabled = false;
+    
+    const btnTerminar = document.getElementById('btnTerminar');
+    if (btnTerminar) btnTerminar.disabled = true;
+    
+    // Resetear variables
+    inicioMs = 0;
+    tiempoEstandar = 0;
+    
+    const cronometro = document.getElementById('cronometro');
+    if (cronometro) {
+        cronometro.textContent = '00:00:00';
+        cronometro.style.color = '';
+    }
+    
+    const excedidoElem = document.getElementById('excedido');
+    if (excedidoElem) excedidoElem.style.display = 'none';
+    
+    const progresoFill = document.getElementById('progresoFill');
+    if (progresoFill) {
+        progresoFill.style.width = '0%';
+        progresoFill.classList.remove('excedido');
+    }
+    
+    const progresoText = document.getElementById('progresoText');
+    if (progresoText) progresoText.textContent = '0%';
+}
+    
+    function reiniciarControlTiempo() {
+      if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+      inicioMs = 0; 
+      tiempoEstandar = 0; 
+      
+      alerta10minMostrada = false;
+      alerta5minMostrada = false;
+      alertaExcedidoMostrada = false;
+      
+      const cronometro = document.getElementById('cronometro');
+      if (cronometro) {
+        cronometro.textContent = '00:00:00';
+        cronometro.style.color = '';
+      }
+      
+      const excedidoElem = document.getElementById('excedido');
+      if (excedidoElem) excedidoElem.style.display = 'none';
+      
+      const progresoFill = document.getElementById('progresoFill');
+      if (progresoFill) {
+        progresoFill.style.width = '0%';
+        progresoFill.classList.remove('excedido');
+      }
+      
+      const progresoText = document.getElementById('progresoText');
+      if (progresoText) progresoText.textContent = '0%';
+      
+      const btnStart = document.getElementById('btnStart');
+      if (btnStart) btnStart.disabled = false;
+      
+      const btnTerminar = document.getElementById('btnTerminar');
+      if (btnTerminar) btnTerminar.disabled = true;
+      
+      mostrarToast('🔄 Tarea reiniciada', 'warning');
+    }
+    
+    function actualizarTiempo() {
+      if(!inicioMs) return;
+      
+      const elapsed = Date.now() - inicioMs;
+      const estimMs = modoPrueba ? (tiempoEstandar * 1000) : (tiempoEstandar * 3600000);
+      const restante = estimMs - elapsed;
+    
+      const cronometro = document.getElementById('cronometro');
+      if (cronometro) {
+        if (restante >= 0) {
+          cronometro.textContent = `Restante: ${formatear(restante)}`;
+          cronometro.style.color = '';
+        } else {
+          cronometro.textContent = `Excedido: ${formatear(Math.abs(restante))}`;
+          cronometro.style.color = 'var(--danger)';
+        }
+      }
+    
+      const progreso = Math.min(100, (elapsed / estimMs) * 100);
+      const progresoFill = document.getElementById('progresoFill');
+      if (progresoFill) {
+        progresoFill.style.width = `${progreso}%`;
+      }
+      
+      const progresoText = document.getElementById('progresoText');
+      if (progresoText) {
+        progresoText.textContent = `${Math.round(progreso)}%`;
+      }
+    
+      if(restante <= 0 && !alertaExcedidoMostrada) {
+        const progresoFill = document.getElementById('progresoFill');
+        if (progresoFill) {
+          progresoFill.classList.add('excedido');
+        }
+        
+        const excedidoElem = document.getElementById('excedido');
+        if (excedidoElem) {
+          excedidoElem.style.display = 'block';
+          excedidoElem.textContent = `-${formatear(Math.abs(restante))} excedido`;
+        }
+      }
+    }
+    
+    function loopControlTiempo() {
+      actualizarTiempo();
+      verificarAlarmas();
+      rafId = requestAnimationFrame(loopControlTiempo);
+    }
+
+    function verificarAlarmas() {
+      if (!inicioMs || silenciado) return;
+      
+      const elapsed = Date.now() - inicioMs;
+      const estimMs = modoPrueba ? (tiempoEstandar * 1000) : (tiempoEstandar * 3600000);
+      const restante = estimMs - elapsed;
+      
+      const restanteMinutos = Math.floor(restante / 60000);
+      
+      if (restanteMinutos <= 10 && !alerta10minMostrada && restante > 0) {
+        reproducirAlarma('warning');
+        alerta10minMostrada = true;
+        mostrarToast('⚠️ ¡10 minutos restantes!', 'warning');
+      }
+      
+      if (restanteMinutos <= 5 && !alerta5minMostrada && restante > 0) {
+        reproducirAlarma('warning');
+        alerta5minMostrada = true;
+        mostrarToast('⚠️ ¡5 minutos restantes!', 'warning');
+      }
+      
+      if (restante <= 0 && !alertaExcedidoMostrada) {
+        reproducirAlarma('danger');
+        alertaExcedidoMostrada = true;
+        mostrarToast('⏰ ¡Tiempo excedido!', 'error');
+      }
+    }
+
+    function reproducirAlarma(tipo = 'warning') {
+      if (silenciado) return;
+      
+      try {
+        const audio = tipo === 'danger' ? 
+          document.getElementById('warningBeep') : 
+          document.getElementById('beep');
+        
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(e => console.log('Error reproduciendo alarma:', e));
+        }
+      } catch (error) {
+        console.error('Error con audio:', error);
+      }
+    }
+    
+    function guardarTareaActiva() {
+      if(!inicioMs) return;
+      
+      const tareaActiva = {
+        inicio: inicioMs,
+        tiempoEstandar: tiempoEstandar,
+        operacion: document.getElementById('inpOperacion')?.value.trim() || '',
+        tipo: document.getElementById('selTipo')?.value || '',
+        tarea: document.getElementById('selTipo')?.value === 'Personalizada' ? 
+          (document.getElementById('inpNombrePersonalizado')?.value || 'Sin nombre') : 
+          (document.getElementById('selTarea')?.value || '')
+      };
+      
+      localStorage.setItem('tareaActiva', JSON.stringify(tareaActiva));
+    }
+    
+    function borrarTareaActiva() {
+      localStorage.removeItem('tareaActiva');
+    }
+    
+    function restaurarTareaActiva() {
+      const tareaActiva = JSON.parse(localStorage.getItem('tareaActiva') || 'null');
+      if(!tareaActiva) return false;
+      
+      const inpOperacion = document.getElementById('inpOperacion');
+      if (inpOperacion) inpOperacion.value = tareaActiva.operacion || '';
+      
+      const selTipo = document.getElementById('selTipo');
+      if (selTipo) selTipo.value = tareaActiva.tipo || '';
+      
+      fillTareasForTipo(tareaActiva.tipo);
+      
+      if(tareaActiva.tipo === 'Personalizada') {
+        const inpNombrePersonalizado = document.getElementById('inpNombrePersonalizado');
+        if (inpNombrePersonalizado) inpNombrePersonalizado.value = tareaActiva.tarea || '';
+      } else {
+        setTimeout(() => {
+          const selTarea = document.getElementById('selTarea');
+          if (selTarea) selTarea.value = tareaActiva.tarea || '';
+          actualizarBotonInstrucciones();
+        }, 100);
+      }
+      
+      const inpTiempo = document.getElementById('inpTiempo');
+      if (inpTiempo) inpTiempo.value = tareaActiva.tiempoEstandar || '';
+      
+      const minutosConvertidos = document.getElementById('minutosConvertidos');
+      if (minutosConvertidos) minutosConvertidos.textContent = convertDec(tareaActiva.tiempoEstandar || 0);
+      
+      inicioMs = tareaActiva.inicio;
+      tiempoEstandar = tareaActiva.tiempoEstandar;
+      
+      const btnStart = document.getElementById('btnStart');
+      if (btnStart) btnStart.disabled = true;
+      
+      const btnTerminar = document.getElementById('btnTerminar');
+      if (btnTerminar) btnTerminar.disabled = false;
+      
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loopControlTiempo);
+      
+      mostrarToast('⏱ Tarea activa restaurada', 'warning');
+      return true;
+    }
+    
+    // Función para extraer el número de una operación tipo OP-XXX
+function extraerNumeroOperacion(operacion) {
+    if (!operacion) return Infinity; // Las operaciones vacías al final
+    
+    // Buscar patrón OP- seguido de números (OP-120, OP-450, etc.)
+    const match = operacion.match(/OP[-\s]?(\d+)/i);
+    if (match) {
+        return parseInt(match[1], 10);
+    }
+    
+    // Si no es formato OP, devolver el string original para orden alfabético
+    return operacion;
+}
+
+// Función mejorada para renderizar la tabla con ordenamiento
+function renderTabla() {
+    const tbody = document.querySelector('#tabla tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const hist = JSON.parse(localStorage.getItem('historial')||'[]');
+    
+    const fechaFiltro = document.getElementById('filtroFecha')?.value || '';
+    const operacionFiltro = document.getElementById('filtroOperacion')?.value.trim().toLowerCase() || '';
+    let totalMs = 0;
+    
+    // Filtrar registros
+    const registrosFiltrados = hist.filter(r => {
+        const fechaRegistro = r.fecha?.slice(0,10) || '';
+        const operacionRegistro = (r.operacion || '').toLowerCase();
+        
+        if (fechaFiltro && fechaRegistro !== fechaFiltro) return false;
+        if (operacionFiltro && !operacionRegistro.includes(operacionFiltro)) return false;
+        return true;
+    });
+    
+    // ORDENAR POR NÚMERO DE OPERACIÓN (OP)
+    registrosFiltrados.sort((a, b) => {
+        const numA = extraerNumeroOperacion(a.operacion);
+        const numB = extraerNumeroOperacion(b.operacion);
+        
+        // Si ambos son números (formato OP), ordenar numéricamente
+        if (typeof numA === 'number' && typeof numB === 'number') {
+            return numA - numB;
+        }
+        
+        // Si uno es número y el otro no, los números van primero
+        if (typeof numA === 'number') return -1;
+        if (typeof numB === 'number') return 1;
+        
+        // Si ninguno es número, ordenar alfabéticamente
+        return String(a.operacion || '').localeCompare(String(b.operacion || ''));
+    });
+    
+    registrosFiltrados.forEach(r => {
+        const diferenciaMs = msFromHHMMSS(r.diferencia);
+        totalMs += (r.signo === '+') ? diferenciaMs : -diferenciaMs;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${r.operacion || ''}</td>
+            <td>${r.tipo || ''}</td>
+            <td>${r.nombre || ''}</td>
+            <td>${r.estimado || ''}</td>
+            <td>${r.real || '00:00:00'}</td>
+            <td class="${r.signo === '+' ? 'diff-plus' : 'diff-minus'}">${r.signo}${r.diferencia}</td>
+            <td>${r.fecha ? new Date(r.fecha).toLocaleDateString('es-ES') : 'N/A'}</td>
+            <td>✅ Completada</td>
+        `;
+        tbody.appendChild(tr);
+    });
+  
+    const signoTotal = totalMs >= 0 ? '+' : '-';
+    const totalFormateado = formatear(Math.abs(totalMs));
+    const totalElement = document.getElementById('floatingTotalValue');
+    if (totalElement) {
+        totalElement.textContent = `${signoTotal}${totalFormateado}`;
+        totalElement.style.color = totalMs >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+}
+
+// También podemos añadir un selector de ordenamiento en los filtros
+function agregarSelectorOrdenamiento() {
+    const filtrosContainer = document.querySelector('.filtros-container');
+    if (!filtrosContainer) return;
+    
+    // Crear selector de ordenamiento
+    const ordenamientoHTML = `
+        <div class="filtro-item">
+            <label for="ordenarPor">Ordenar por</label>
+            <select id="ordenarPor" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                <option value="op-asc">OP (menor a mayor)</option>
+                <option value="op-desc">OP (mayor a menor)</option>
+                <option value="fecha-desc">Fecha (más reciente)</option>
+                <option value="fecha-asc">Fecha (más antigua)</option>
+                <option value="tipo">Tipo de tarea</option>
+            </select>
+        </div>
+    `;
+    
+    filtrosContainer.insertAdjacentHTML('beforeend', ordenamientoHTML);
+    
+    // Añadir evento al selector
+    const ordenarPor = document.getElementById('ordenarPor');
+    if (ordenarPor) {
+        ordenarPor.addEventListener('change', function() {
+            renderTablaConOrden(this.value);
+        });
+    }
+}
+
+// Versión mejorada con ordenamiento configurable
+function renderTablaConOrden(tipoOrden = 'op-asc') {
+    const tbody = document.querySelector('#tabla tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const hist = JSON.parse(localStorage.getItem('historial')||'[]');
+    
+    const fechaFiltro = document.getElementById('filtroFecha')?.value || '';
+    const operacionFiltro = document.getElementById('filtroOperacion')?.value.trim().toLowerCase() || '';
+    let totalMs = 0;
+    
+    // Filtrar registros
+    const registrosFiltrados = hist.filter(r => {
+        const fechaRegistro = r.fecha?.slice(0,10) || '';
+        const operacionRegistro = (r.operacion || '').toLowerCase();
+        
+        if (fechaFiltro && fechaRegistro !== fechaFiltro) return false;
+        if (operacionFiltro && !operacionRegistro.includes(operacionFiltro)) return false;
+        return true;
+    });
+    
+    // Aplicar ordenamiento según selección
+    registrosFiltrados.sort((a, b) => {
+        switch(tipoOrden) {
+            case 'op-asc':
+                const numA = extraerNumeroOperacion(a.operacion);
+                const numB = extraerNumeroOperacion(b.operacion);
+                if (typeof numA === 'number' && typeof numB === 'number') return numA - numB;
+                if (typeof numA === 'number') return -1;
+                if (typeof numB === 'number') return 1;
+                return String(a.operacion || '').localeCompare(String(b.operacion || ''));
+                
+            case 'op-desc':
+                const numC = extraerNumeroOperacion(a.operacion);
+                const numD = extraerNumeroOperacion(b.operacion);
+                if (typeof numC === 'number' && typeof numD === 'number') return numD - numC;
+                if (typeof numC === 'number') return 1;
+                if (typeof numD === 'number') return -1;
+                return String(b.operacion || '').localeCompare(String(a.operacion || ''));
+                
+            case 'fecha-desc':
+                return new Date(b.fecha || 0) - new Date(a.fecha || 0);
+                
+            case 'fecha-asc':
+                return new Date(a.fecha || 0) - new Date(b.fecha || 0);
+                
+            case 'tipo':
+                // Primero por tipo, luego por OP
+                const tipoCompare = (a.tipo || '').localeCompare(b.tipo || '');
+                if (tipoCompare !== 0) return tipoCompare;
+                
+                const numE = extraerNumeroOperacion(a.operacion);
+                const numF = extraerNumeroOperacion(b.operacion);
+                if (typeof numE === 'number' && typeof numF === 'number') return numE - numF;
+                return String(a.operacion || '').localeCompare(String(b.operacion || ''));
+                
+            default:
+                return 0;
+        }
+    });
+    
+    registrosFiltrados.forEach(r => {
+        const diferenciaMs = msFromHHMMSS(r.diferencia);
+        totalMs += (r.signo === '+') ? diferenciaMs : -diferenciaMs;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${r.operacion || ''}</td>
+            <td>${r.tipo || ''}</td>
+            <td>${r.nombre || ''}</td>
+            <td>${r.estimado || ''}</td>
+            <td>${r.real || '00:00:00'}</td>
+            <td class="${r.signo === '+' ? 'diff-plus' : 'diff-minus'}">${r.signo}${r.diferencia}</td>
+            <td>${r.fecha ? new Date(r.fecha).toLocaleDateString('es-ES') : 'N/A'}</td>
+            <td>✅ Completada</td>
+        `;
+        tbody.appendChild(tr);
+    });
+  
+    const signoTotal = totalMs >= 0 ? '+' : '-';
+    const totalFormateado = formatear(Math.abs(totalMs));
+    const totalElement = document.getElementById('floatingTotalValue');
+    if (totalElement) {
+        totalElement.textContent = `${signoTotal}${totalFormateado}`;
+        totalElement.style.color = totalMs >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+}
+
+// Modificar la inicialización para añadir el selector
+function inicializarControlTiempo() {
+    const hoy = new Date().toISOString().slice(0,10);
+    const filtroFecha = document.getElementById('filtroFecha');
+    if (filtroFecha) filtroFecha.value = hoy;
+    
+    // Añadir selector de ordenamiento si no existe
+    if (!document.getElementById('ordenarPor')) {
+        agregarSelectorOrdenamiento();
+    }
+    
+    renderTablaConOrden('op-asc'); // Por defecto ordenar por OP ascendente
+    restaurarTareaActiva();
+    
+    const selTipo = document.getElementById('selTipo');
+    if (selTipo && selTipo.value) {
+        fillTareasForTipo(selTipo.value);
+    }
+}
+
+  // FUNCIÓN PARA EXTRAER NÚMERO DE OP (si no existe ya)
+// =============================================
+function extraerNumeroOperacion(nombre) {
+    if (!nombre) return Infinity;
+    
+    // Buscar patrón OP- seguido de números (OP-120, OP-450, etc.)
+    const match = nombre.match(/OP[-\s]?(\d+)/i);
+    if (match) {
+        return parseInt(match[1], 10);
+    }
+    
+    // Si no es formato OP, devolver un número muy alto para que vayan al final
+    return 999999;
+}
+  
+  
+    // =============================================
+    // FUNCIONES DE ADMINISTRADOR DE TAREAS
+    // =============================================
+    function inicializarAdminTareas() {
+      cargarTareasDesdePrincipal();
+      mostrarTareasAdmin();
+      actualizarContadorTareas();
+      
+      const criticosContainer = document.getElementById('criticosContainer');
+      if (criticosContainer && criticosContainer.children.length === 0) {
+        agregarCritico();
+        agregarMaterial();
+        agregarHerramienta();
+      }
+      
+      const searchInput = document.getElementById('searchTareas');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          filtrarTareas(this.value);
+        });
+      }
+    }
+    
+    function inicializarInstrucciones() {
+      cargarTareasDesdePrincipal();
+      mostrarInstruccionesGrid();
+      
+      const searchInput = document.getElementById('searchInstrucciones');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          filtrarInstrucciones();
+        });
+      }
+      
+      const filterSelect = document.getElementById('filterTipoInstrucciones');
+      if (filterSelect) {
+        filterSelect.addEventListener('change', filtrarInstrucciones);
+      }
+    }
+    
+    function actualizarContadorTareas() {
+      const totalTareas = Object.keys(tareasGuardadas).length;
+      const totalTareasElement = document.getElementById('totalTareasCount');
+      if (totalTareasElement) {
+        totalTareasElement.textContent = totalTareas;
+      }
+    }
+    
+    function filtrarTareas(termino) {
+      const lista = document.getElementById('tareasLista');
+      const items = lista.getElementsByClassName('tarea-item');
+      
+      let visibleCount = 0;
+      termino = termino.toLowerCase().trim();
+      
+      for (let item of items) {
+        const nombre = item.querySelector('.tarea-nombre')?.textContent.toLowerCase() || '';
+        const tipo = item.querySelector('.tarea-tipo')?.textContent.toLowerCase() || '';
+        const titulo = item.querySelector('.tarea-detalle-item strong')?.nextSibling?.textContent?.toLowerCase() || '';
+        
+        const coincide = nombre.includes(termino) || 
+                        tipo.includes(termino) || 
+                        titulo.includes(termino);
+        
+        if (coincide || termino === '') {
+          item.style.display = '';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      }
+    }
+    
+    function filtrarInstrucciones() {
+      const searchTerm = document.getElementById('searchInstrucciones').value.toLowerCase();
+      const filterType = document.getElementById('filterTipoInstrucciones').value;
+      const cards = document.querySelectorAll('.instruccion-card');
+      const emptyState = document.getElementById('emptyInstruccionesState');
+      
+      let visibleCount = 0;
+      
+      cards.forEach(card => {
+        const nombre = card.querySelector('.instruccion-card-header h4')?.textContent.toLowerCase() || '';
+        const tipo = card.querySelector('.tipo')?.textContent.toLowerCase() || '';
+        
+        let matchesSearch = searchTerm === '' || nombre.includes(searchTerm);
+        let matchesType = filterType === '' || tipo.includes(filterType.toLowerCase());
+        
+        if (matchesSearch && matchesType) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      if (emptyState) {
+        if (visibleCount === 0 && Object.keys(tareasGuardadas).length > 0) {
+          emptyState.style.display = 'block';
+          emptyState.innerHTML = `
+            <i class="fas fa-search"></i>
+            <h4>No se encontraron resultados</h4>
+            <p>Intenta con otros filtros de búsqueda</p>
+          `;
+        } else {
+          emptyState.style.display = 'none';
+        }
+      }
+    }
+    
+    function cargarTareasDesdePrincipal() {
+      const tareasStorage = localStorage.getItem('tareasInstrucciones');
+      if (tareasStorage) {
+        tareasGuardadas = JSON.parse(tareasStorage);
+        return;
+      }
+      tareasGuardadas = {};
+    }
+    
+    function cargarTareasPredeterminadasAdmin() {
+      cargarTareasDesdePrincipal();
+      
+      Object.keys(tareasPredeterminadas).forEach(nombre => {
+        if (!tareasGuardadas[nombre]) {
+          tareasGuardadas[nombre] = tareasPredeterminadas[nombre];
+        }
+      });
+      
+      Object.keys(tareasBase).forEach(nombre => {
+        if (!tareasGuardadas[nombre]) {
+          tareasGuardadas[nombre] = {
+            tipo: "DC3",
+            titulo: nombre,
+            tiempo: tareasBase[nombre],
+            descripcion: "Tarea predeterminada",
+            elementosCriticos: [],
+            materiales: [],
+            herramientas: []
+          };
+        }
+      });
+      
+      localStorage.setItem('tareasInstrucciones', JSON.stringify(tareasGuardadas));
+      
+      mostrarTareasAdmin();
+      actualizarContadorTareas();
+      mostrarToast('Tareas predeterminadas cargadas correctamente', 'success');
+    }
+    
+    // FUNCIONES PARA AÑADIR ELEMENTOS (ahora con estilos unificados)
+    function agregarCritico() {
+    const container = document.getElementById('criticosContainer');
+    if (!container) return;
+
+    const id = 'critico-' + Date.now();
+
+    const html = `
+        <div id="${id}" class="array-item" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid #e74c3c; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <strong style="color: #e74c3c;"><i class="fas fa-exclamation-circle"></i> Elemento Crítico</strong>
+                <button type="button" onclick="eliminarElemento('${id}')" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 10px;">
+                <label style="font-weight: 600; margin-bottom: 5px; display: block;">Título del elemento crítico</label>
+                <input type="text" class="critico-titulo" placeholder="Ej: Loctite 270" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 10px;">
+                <label style="font-weight: 600; margin-bottom: 5px; display: block;">Descripción</label>
+                <textarea class="critico-descripcion" placeholder="Describa por qué es crítico..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; min-height: 60px;"></textarea>
+            </div>
+
+            <div class="admin-form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="critico-checkbox" checked style="width: auto;">
+                    <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Marcar como crítico
+                </label>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function agregarMaterial() {
+    const container = document.getElementById('materialesContainer');
+    if (!container) return;
+
+    const id = 'material-' + Date.now();
+
+    const html = `
+        <div id="${id}" class="array-item" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <strong style="color: #3498db;"><i class="fas fa-box"></i> Material</strong>
+                <button type="button" onclick="eliminarElemento('${id}')" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="admin-form-group" style="flex: 2;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Nombre del material</label>
+                    <input type="text" class="material-nombre" placeholder="Ej: Tuerca M12" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+                <div class="admin-form-group" style="flex: 1;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Descripción</label>
+                    <input type="text" class="material-descripcion" placeholder="Ej: Tornillo para" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+            
+
+            <div class="form-row" style="display: flex; gap: 15px;">
+                <div class="admin-form-group" style="flex: 1;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Cantidad</label>
+                    <input type="number" class="material-cantidad" value="1" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+                <div class="admin-form-group" style="flex: 1;">
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block;">Unidad</label>
+                    <input type="text" class="material-unidad" placeholder="Ej: unidades" value="unidades" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function agregarHerramienta() {
+    const container = document.getElementById('herramientasContainer');
+    if (!container) return;
+
+    const id = 'herramienta-' + Date.now();
+
+    const html = `
+        <div id="${id}" class="array-item" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid #f39c12; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <strong style="color: #f39c12;"><i class="fas fa-tools"></i> Herramienta</strong>
+                <button type="button" onclick="eliminarElemento('${id}')" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 10px;">
+                <label style="font-weight: 600; margin-bottom: 5px; display: block;">Nombre de la herramienta</label>
+                <input type="text" class="herramienta-nombre" placeholder="Ej: Dinamométrica 56Nm" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+
+            <div class="admin-form-group">
+                <label style="font-weight: 600; margin-bottom: 5px; display: block;">Descripción (opcional)</label>
+                <input type="text" class="herramienta-descripcion" placeholder="Ej: Para unir Busbars" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+}
+    
+    function eliminarElemento(id) {
+      const elemento = document.getElementById(id);
+      if (elemento) {
+        elemento.remove();
+      }
+    }
+    
+    function limpiarFormularioAdmin() {
+      const tareaNombre = document.getElementById('tareaNombre');
+      if (tareaNombre) tareaNombre.value = '';
+      
+      const tareaTipo = document.getElementById('tareaTipo');
+      if (tareaTipo) tareaTipo.value = '';
+      
+      const tareaTitulo = document.getElementById('tareaTitulo');
+      if (tareaTitulo) tareaTitulo.value = '';
+      
+      const tareaTiempo = document.getElementById('tareaTiempo');
+      if (tareaTiempo) tareaTiempo.value = '';
+      
+      const tareaDescripcion = document.getElementById('tareaDescripcion');
+      if (tareaDescripcion) tareaDescripcion.value = '';
+      
+      const criticosContainer = document.getElementById('criticosContainer');
+      if (criticosContainer) criticosContainer.innerHTML = '';
+      
+      const materialesContainer = document.getElementById('materialesContainer');
+      if (materialesContainer) materialesContainer.innerHTML = '';
+      
+      const herramientasContainer = document.getElementById('herramientasContainer');
+      if (herramientasContainer) herramientasContainer.innerHTML = '';
+      
+      tareaEditando = null;
+      
+      agregarCritico();
+      agregarMaterial();
+      agregarHerramienta();
+      
+      mostrarToast('Formulario limpiado', 'info');
+    }
+    
+    function recogerElementosCriticos() {
+    const elementos = [];
+    // Busca dentro del contenedor, por la clase 'array-item'
+    const criticosElements = document.querySelectorAll('#criticosContainer .array-item');
+
+    criticosElements.forEach(item => {
+        // Usa clases específicas para una búsqueda más fiable
+        const titulo = item.querySelector('.critico-titulo')?.value.trim();
+        const descripcion = item.querySelector('.critico-descripcion')?.value.trim();
+        const esCritico = item.querySelector('.critico-checkbox')?.checked || false;
+
+        if (titulo && descripcion) {
+            elementos.push({ titulo, descripcion, critico: esCritico });
+        }
+    });
+
+    return elementos;
+}
+
+function recogerMateriales() {
+    const materiales = [];
+    const materialesElements = document.querySelectorAll('#materialesContainer .array-item');
+
+    materialesElements.forEach(item => {
+        const nombre = item.querySelector('.material-nombre')?.value.trim();
+        const descripcion = item.querySelector('.material-descripcion')?.value.trim() || '';
+        const cantidad = parseFloat(item.querySelector('.material-cantidad')?.value) || 0;
+        const unidad = item.querySelector('.material-unidad')?.value.trim() || 'unidades';
+
+        if (nombre && cantidad > 0) {
+            materiales.push({ nombre, descripcion, cantidad, unidad });
+        }
+    });
+
+    return materiales;
+}
+
+function recogerHerramientas() {
+    const herramientas = [];
+    const herramientasElements = document.querySelectorAll('#herramientasContainer .array-item');
+
+    herramientasElements.forEach(item => {
+        const nombre = item.querySelector('.herramienta-nombre')?.value.trim();
+        const descripcion = item.querySelector('.herramienta-descripcion')?.value.trim() || '';
+
+        if (nombre) {
+            herramientas.push({ nombre, descripcion, imagen: '' });
+        }
+    });
+
+    return herramientas;
+}
+    
+    async function guardarTareaAdmin() {
+    try {
+        const tareaNombre = document.getElementById('tareaNombre');
+        const tareaTipo = document.getElementById('tareaTipo');
+        const tareaTitulo = document.getElementById('tareaTitulo');
+        const tareaTiempo = document.getElementById('tareaTiempo');
+        const tareaDescripcion = document.getElementById('tareaDescripcion');
+        
+        if (!tareaNombre || !tareaTipo || !tareaTitulo || !tareaTiempo) {
+            mostrarToast('❌ Error al acceder a los campos del formulario', 'error');
+            return;
+        }
+        
+        const nombre = tareaNombre.value.trim();
+        const tipo = tareaTipo.value;
+        const titulo = tareaTitulo.value.trim();
+        const tiempoInput = tareaTiempo.value;
+        const descripcion = tareaDescripcion ? tareaDescripcion.value.trim() : '';
+
+        if (!nombre) {
+            mostrarToast('❌ El nombre de la tarea es obligatorio', 'error');
+            return;
+        }
+        
+        if (!tipo) {
+            mostrarToast('❌ El tipo de tarea es obligatorio', 'error');
+            return;
+        }
+        
+        if (!titulo) {
+            mostrarToast('❌ El título descriptivo es obligatorio', 'error');
+            return;
+        }
+        
+        if (!tiempoInput) {
+            mostrarToast('❌ El tiempo estimado es obligatorio', 'error');
+            return;
+        }
+        
+        const tiempo = parseFloat(tiempoInput);
+        if (isNaN(tiempo) || tiempo <= 0) {
+            mostrarToast('❌ El tiempo estimado debe ser un número mayor a 0', 'error');
+            return;
+        }
+
+        const elementosCriticos = recogerElementosCriticos();
+        const materiales = recogerMateriales();
+        const herramientas = recogerHerramientas();
+
+        const nuevaTarea = {
+            tipo: tipo,
+            titulo: titulo,
+            tiempo: tiempo,
+            descripcion: descripcion,
+            elementosCriticos: elementosCriticos,
+            materiales: materiales,
+            herramientas: herramientas
+        };
+
+        tareasGuardadas[nombre] = nuevaTarea;
+        
+        localStorage.setItem('tareasInstrucciones', JSON.stringify(tareasGuardadas));
+
+        const mensaje = tareaEditando ? 'Tarea actualizada correctamente' : 'Tarea guardada correctamente';
+        mostrarToast(`✅ ${mensaje} (Guardada localmente)`, 'success');
+        
+        actualizarContadorTareas();
+        limpiarFormularioAdmin();
+        mostrarTareasAdmin();
+        
+        // Actualizar automáticamente la sección de instrucciones si está visible
+        if (currentSection === 'instrucciones') {
+            mostrarInstruccionesGrid();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al guardar tarea:', error);
+        mostrarToast('❌ Error al guardar la tarea', 'error');
+    }
+}
+    
+    function mostrarTareasAdmin() {
+      const container = document.getElementById('tareasLista');
+      if (!container) return;
+      
+      if (!tareasGuardadas || Object.keys(tareasGuardadas).length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>No hay tareas guardadas</h4>
+            <p>Crea tu primera tarea usando el formulario</p>
+            <button class="btn-add" style="width: auto; margin-top: 15px;" onclick="document.getElementById('tareaNombre').focus()">
+              <i class="fas fa-plus"></i>
+              Crear Primera Tarea
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      const tareasOrdenadas = Object.entries(tareasGuardadas)
+        .sort(([nombreA, tareaA], [nombreB, tareaB]) => {
+          if (tareaA.tipo < tareaB.tipo) return -1;
+          if (tareaA.tipo > tareaB.tipo) return 1;
+          return nombreA.localeCompare(nombreB);
+        });
+    
+      tareasOrdenadas.forEach(([nombre, tarea]) => {
+        const tipoClass = tarea.tipo ? tarea.tipo.toLowerCase() : '';
+        
+        const criticoCount = tarea.elementosCriticos?.length || 0;
+        const materialCount = tarea.materiales?.length || 0;
+        const herramientaCount = tarea.herramientas?.length || 0;
+        
+        const html = `
+          <div class="tarea-item">
+            <div class="tarea-header">
+              <div class="tarea-info">
+                <div class="tarea-nombre">${nombre}</div>
+                <span class="tarea-tipo ${tipoClass}">${tarea.tipo || 'Sin tipo'}</span>
+              </div>
+              <div class="tarea-acciones">
+                <button class="btn-edit" onclick="editarTareaAdmin('${nombre.replace(/'/g, "\\'")}')">
+                  <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn-delete" onclick="eliminarTareaAdmin('${nombre.replace(/'/g, "\\'")}')">
+                  <i class="fas fa-trash"></i> Eliminar
+                </button>
+              </div>
+            </div>
+            <div class="tarea-detalles">
+              <p><strong>Título:</strong> ${tarea.titulo || 'Sin título'}</p>
+              <p><strong>Tiempo estimado:</strong> ${tarea.tiempo || 0} horas</p>
+              
+              <div class="tarea-detalles-grid">
+                <div class="tarea-detalle-item">
+                  <strong><i class="fas fa-exclamation-triangle"></i> Críticos</strong>
+                  ${criticoCount}
+                </div>
+                <div class="tarea-detalle-item">
+                  <strong><i class="fas fa-box-open"></i> Materiales</strong>
+                  ${materialCount}
+                </div>
+                <div class="tarea-detalle-item">
+                  <strong><i class="fas fa-tools"></i> Herramientas</strong>
+                  ${herramientaCount}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += html;
+      });
+    }
+    
+    function mostrarInstruccionesGrid() {
+    const container = document.getElementById('instruccionesLista');
+    if (!container) return;
+    
+    if (!tareasGuardadas || Object.keys(tareasGuardadas).length === 0) {
+        const emptyState = document.getElementById('emptyInstruccionesState');
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Convertir tareas a array y ordenar automáticamente por OP
+    const tareasOrdenadas = Object.entries(tareasGuardadas).sort(([nombreA], [nombreB]) => {
+        const numA = extraerNumeroOperacion(nombreA);
+        const numB = extraerNumeroOperacion(nombreB);
+        
+        // Ordenar numéricamente (OP-1, OP-2, OP-10, OP-100...)
+        return numA - numB;
+    });
+    
+    tareasOrdenadas.forEach(([nombre, tarea]) => {
+        const tipoClass = tarea.tipo ? tarea.tipo.toLowerCase() : '';
+        const criticoCount = tarea.elementosCriticos?.length || 0;
+        const materialCount = tarea.materiales?.length || 0;
+        const herramientaCount = tarea.herramientas?.length || 0;
+        
+        // Detectar si el nombre tiene formato OP para mostrar badge
+        const esOP = /OP[-\s]?\d+/i.test(nombre);
+        const numeroOP = esOP ? extraerNumeroOperacion(nombre) : null;
+        
+        const html = `
+            <div class="instruccion-card">
+                <div class="instruccion-card-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0;">${nombre}</h4>
+                        ${esOP ? `<span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem;">OP-${numeroOP}</span>` : ''}
+                    </div>
+                    <span class="tarea-tipo ${tipoClass}" style="margin-top: 8px; display: inline-block;">${tarea.tipo || 'Sin tipo'}</span>
+                </div>
+                <div class="instruccion-card-body">
+                    <p class="instruccion-summary">${tarea.descripcion || tarea.titulo || 'Sin descripción'}</p>
+                    
+                    <div class="instruccion-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>${tarea.tiempo || 0} horas</span>
+                        </div>
+                        <div class="meta-item tipo">
+                            <i class="fas fa-tag"></i>
+                            <span>${tarea.tipo || 'Sin tipo'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="instruccion-stats">
+                        <div class="stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>${criticoCount} críticos</span>
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-box-open"></i>
+                            <span>${materialCount} materiales</span>
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-tools"></i>
+                            <span>${herramientaCount} herramientas</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-view" style="width: 100%; margin-top: 15px;" onclick="verInstruccionesModal('${nombre.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-eye"></i> Ver Instrucciones Completas
+                    </button>
+                </div>
+            </div>
+        `;
+        container.innerHTML += html;
+    });
+}
+    
+    function editarTareaAdmin(nombre) {
+      const tarea = tareasGuardadas[nombre];
+      if (!tarea) {
+        mostrarToast('❌ Tarea no encontrada', 'error');
+        return;
+      }
+
+      const tareaNombre = document.getElementById('tareaNombre');
+      if (tareaNombre) tareaNombre.value = nombre;
+      
+      const tareaTipo = document.getElementById('tareaTipo');
+      if (tareaTipo) tareaTipo.value = tarea.tipo;
+      
+      const tareaTitulo = document.getElementById('tareaTitulo');
+      if (tareaTitulo) tareaTitulo.value = tarea.titulo;
+      
+      const tareaTiempo = document.getElementById('tareaTiempo');
+      if (tareaTiempo) tareaTiempo.value = tarea.tiempo;
+      
+      const tareaDescripcion = document.getElementById('tareaDescripcion');
+      if (tareaDescripcion && tarea.descripcion) {
+        tareaDescripcion.value = tarea.descripcion;
+      }
+
+      const criticosContainer = document.getElementById('criticosContainer');
+      if (criticosContainer) criticosContainer.innerHTML = '';
+      
+      const materialesContainer = document.getElementById('materialesContainer');
+      if (materialesContainer) materialesContainer.innerHTML = '';
+      
+      const herramientasContainer = document.getElementById('herramientasContainer');
+      if (herramientasContainer) herramientasContainer.innerHTML = '';
+
+      if (tarea.elementosCriticos && tarea.elementosCriticos.length > 0) {
+        tarea.elementosCriticos.forEach(critico => {
+          agregarCritico();
+          const container = document.getElementById('criticosContainer');
+          const lastItem = container.lastElementChild;
+          const inputs = lastItem.querySelectorAll('input, textarea');
+          inputs[0].value = critico.titulo;
+          inputs[1].value = critico.descripcion;
+          inputs[2].checked = critico.critico;
+        });
+      } else {
+        agregarCritico();
+      }
+
+      if (tarea.materiales && tarea.materiales.length > 0) {
+        tarea.materiales.forEach(material => {
+          agregarMaterial();
+          const container = document.getElementById('materialesContainer');
+          const lastItem = container.lastElementChild;
+          const inputs = lastItem.querySelectorAll('input');
+          inputs[0].value = material.nombre;
+          inputs[1].value = material.descripcion;
+          inputs[2].value = material.cantidad;
+          inputs[3].value = material.unidad;
+        });
+      } else {
+        agregarMaterial();
+      }
+
+      if (tarea.herramientas && tarea.herramientas.length > 0) {
+        tarea.herramientas.forEach(herramienta => {
+          agregarHerramienta();
+          const container = document.getElementById('herramientasContainer');
+          const lastItem = container.lastElementChild;
+          const inputs = lastItem.querySelectorAll('input');
+          inputs[0].value = herramienta.nombre;
+          inputs[1].value = herramienta.descripcion;
+        });
+      } else {
+        agregarHerramienta();
+      }
+
+      tareaEditando = nombre;
+      mostrarToast(`✏️ Editando tarea: ${nombre}`, 'info');
+      
+      document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function verInstruccionesModal(nombre) {
+      const tarea = tareasGuardadas[nombre];
+      if (!tarea) {
+        mostrarToast('❌ Tarea no encontrada', 'error');
+        return;
+      }
+      
+      instruccionesActuales = tarea;
+      mostrarInformacionGeneral(tarea, nombre);
+      document.getElementById('modalInstrucciones').style.display = 'flex';
+    }
+    
+    // Función para detectar el tipo de material basado en su nombre
+function detectarTipoMaterial(nombre) {
+    if (!nombre) return 'otro';
+    
+    const nombreLower = nombre.toLowerCase().trim();
+    
+    // ===== DETECCIÓN DE ARANDELAS =====
+    // Arandelas SK (skb, sks)
+    if (/^sk[b,s,m,k]\d+/.test(nombreLower) || 
+        /^sk[b,s,m,k]\s+\d+/.test(nombreLower)) {
+        return 'arandela';
+    }
+    
+    // Arandelas planas (plana, plana m, arandela plana)
+    if (nombreLower.includes('plana') || 
+        /^plana\s+m\d+/.test(nombreLower) ||
+        /arandela\s+plana/.test(nombreLower)) {
+        return 'arandela';
+    }
+    
+    // Arandelas canónicas / cónicas
+    if (nombreLower.includes('canonica') || 
+        nombreLower.includes('cónica') || 
+        nombreLower.includes('conica')) {
+        return 'arandela';
+    }
+    
+    // Arandelas de presión / grower
+    if (nombreLower.includes('presión') || 
+        nombreLower.includes('presion') || 
+        nombreLower.includes('grower') ||
+        nombreLower.includes('arandela de presion')) {
+        return 'arandela';
+    }
+    
+    // Cualquier material que contenga "arandela" + medida
+    if (nombreLower.includes('arandela') && /m\d+/.test(nombreLower)) {
+        return 'arandela';
+    }
+    
+    // ===== DETECCIÓN DE TUERCAS =====
+    // Tuercas simples (M8, M10, M12, etc.)
+    if (/^m\d+$/.test(nombreLower) || 
+        (/^m\d+[a-z]*$/.test(nombreLower) && !nombreLower.includes('x') && !nombreLower.includes('torx') && !nombreLower.includes('hex'))) {
+        return 'tuerca';
+    }
+    
+    // Tuercas con especificaciones (M8 autoblocante, M10 seguridad, etc.)
+    if (/^m\d+\s+(autoblocante|seguridad|mariposa|almenada|ciega|casquillo)/.test(nombreLower)) {
+        return 'tuerca';
+    }
+    
+    
+    // ===== DETECCIÓN DE TORNILLOS =====
+    // Tornillos con medida Mxx por Mxx (M8x35, M10x25, etc.)
+    if (/^m\d+x\d+/.test(nombreLower)) {
+        return 'tornillo';
+    }
+    
+    // Tornillos Torx
+    if (nombreLower.includes('torx') || /torx\s+m\d+/.test(nombreLower)) {
+        return 'tornillo';
+    }
+    
+    // Tornillos Allen / Hexagonales
+    if (nombreLower.includes('allen') || 
+        nombreLower.includes('hex') || 
+        nombreLower.includes('hexagonal') ||
+        nombreLower.includes('cabeza hexagonal')) {
+        return 'tornillo';
+    }
+    
+    // Tornillos con cabeza específica
+    if (nombreLower.includes('cabeza') || 
+        nombreLower.includes('socket') ||
+        nombreLower.includes('avellanado') ||
+        nombreLower.includes('cilíndrica') ||
+        nombreLower.includes('cilindrica')) {
+        return 'tornillo';
+    }
+    
+    // Tornillos de potencia / prisionero
+    if (nombreLower.includes('potencia') || 
+        nombreLower.includes('prisionero') ||
+        nombreLower.includes('sin cabeza')) {
+        return 'tornillo';
+    }
+    
+    return 'otro';
+}
+
+// Función para obtener el color según el tipo de material
+function getColorPorTipo(tipo) {
+    switch(tipo) {
+        case 'tuerca':
+            return '#3498db'; // Azul
+        case 'tornillo':
+            return '#e74c3c'; // Rojo
+        case 'arandela':
+            return '#2ecc71'; // Verde
+        default:
+            return '#95a5a6'; // Gris para otros materiales
+    }
+}
+
+// Función para agrupar materiales por tipo
+function agruparMaterialesPorTipo(materiales) {
+    const grupos = {
+        tuercas: [],
+        tornillos: [],
+        arandelas: [],
+        otros: []
+    };
+    
+    materiales.forEach(material => {
+        const tipo = detectarTipoMaterial(material.nombre);
+        
+        switch(tipo) {
+            case 'tuerca':
+                grupos.tuercas.push(material);
+                break;
+            case 'tornillo':
+                grupos.tornillos.push(material);
+                break;
+            case 'arandela':
+                grupos.arandelas.push(material);
+                break;
+            default:
+                grupos.otros.push(material);
+        }
+    });
+    
+    return grupos;
+}
+
+// Función para obtener un ícono según el tipo de material
+function getIconoPorTipo(tipo) {
+    switch(tipo) {
+        case 'tuerca':
+            return 'fa-circle';
+        case 'tornillo':
+            return 'fa-arrow-right';
+        case 'arandela':
+            return 'fa-circle-o';
+        default:
+            return 'fa-cube';
+    }
+}
+
+// Reemplazar la función mostrarInformacionGeneral con la nueva versión mejorada
+function mostrarInformacionGeneral(tarea, nombreTarea) {
+    const modalBody = document.getElementById('modalBody');
+    const modalTitulo = document.getElementById('modalTitulo');
+    
+    modalTitulo.textContent = `Instrucciones: ${nombreTarea}`;
+    
+    let html = `
+        <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.4rem;">
+                <i class="fas fa-tasks"></i> ${nombreTarea}
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e1e8ed;">
+                    <strong><i class="fas fa-tag"></i> Tipo:</strong> ${tarea.tipo || 'No especificado'}
+                </div>
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e1e8ed;">
+                    <strong><i class="fas fa-clock"></i> Tiempo estimado:</strong> ${tarea.tiempo || 0} horas
+                </div>
+            </div>
+            
+            ${tarea.descripcion ? `<p style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--secondary);">${tarea.descripcion}</p>` : ''}
+    `;
+    
+    if (tarea.elementosCriticos && tarea.elementosCriticos.length > 0) {
+        html += `<h4 style="color: #e74c3c; margin-top: 25px; font-size: 1.2rem;"><i class="fas fa-exclamation-triangle"></i> Elementos Críticos</h4>`;
+        tarea.elementosCriticos.forEach(critico => {
+            html += `
+                <div style="background: #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #e74c3c;">
+                    <strong style="color: #e74c3c;">${critico.titulo}</strong>
+                    <p style="margin: 10px 0 0 0; color: #333;">${critico.descripcion}</p>
+                </div>
+            `;
+        });
+    }
+    
+    if (tarea.materiales && tarea.materiales.length > 0) {
+        const gruposMateriales = agruparMaterialesPorTipo(tarea.materiales);
+        const tieneMateriales = gruposMateriales.tuercas.length > 0 || 
+                               gruposMateriales.tornillos.length > 0 || 
+                               gruposMateriales.arandelas.length > 0 || 
+                               gruposMateriales.otros.length > 0;
+        
+        if (tieneMateriales) {
+            html += `
+                <h4 style="color: #3498db; margin-top: 25px; font-size: 1.2rem; margin-bottom: 15px;">
+                    <i class="fas fa-box-open"></i> Materiales Necesarios
+                </h4>
+            `;
+            
+            // Leyenda de colores mejorada
+            html += `
+                <div style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; flex-wrap: wrap; border: 1px solid #e1e8ed;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #3498db; border-radius: 4px;"></div>
+                        <i class="fas fa-circle" style="color: #3498db; font-size: 0.8rem;"></i>
+                        <span style="font-size: 0.9rem;">Tuercas (M8, M10, M12...)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #e74c3c; border-radius: 4px;"></div>
+                        <i class="fas fa-arrow-right" style="color: #e74c3c; font-size: 0.8rem;"></i>
+                        <span style="font-size: 0.9rem;">Tornillos (Torx, Allen, Hex...)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #2ecc71; border-radius: 4px;"></div>
+                        <i class="fas fa-circle-o" style="color: #2ecc71; font-size: 0.8rem;"></i>
+                        <span style="font-size: 0.9rem;">Arandelas (Planas, SK, Canónicas...)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: #95a5a6; border-radius: 4px;"></div>
+                        <i class="fas fa-cube" style="color: #95a5a6; font-size: 0.8rem;"></i>
+                        <span style="font-size: 0.9rem;">Otros materiales</span>
+                    </div>
+                </div>
+            `;
+            
+            // Función para renderizar un grupo de materiales
+            const renderizarGrupo = (materiales, titulo, color, icono) => {
+                if (materiales.length === 0) return '';
+                
+                let grupoHtml = `
+                    <div style="margin-bottom: 15px;">
+                        <h5 style="color: ${color}; margin: 0 0 10px 0; font-size: 1rem; border-bottom: 2px solid ${color}40; padding-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas ${icono}"></i>
+                            ${titulo} <span style="background: ${color}20; color: ${color}; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${materiales.length}</span>
+                        </h5>
+                    </div>
+                `;
+                
+                materiales.forEach(material => {
+                    grupoHtml += `
+                        <div style="background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid ${color}; transition: all 0.2s ease; hover: transform: translateX(2px);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <i class="fas ${icono}" style="color: ${color}; font-size: 0.9rem;"></i>
+                                <strong style="color: ${color};">${material.nombre}</strong>
+                            </div>
+                            <p style="margin: 5px 0; color: #666; font-size: 0.9rem;">${material.descripcion || 'Sin descripción'}</p>
+                            <div style="color: #7f8c8d; font-size: 0.85rem; background: #f8fafc; padding: 5px 10px; border-radius: 4px; display: inline-block;">
+                                <i class="fas fa-hashtag" style="font-size: 0.7rem;"></i> Cantidad: ${material.cantidad || 0} ${material.unidad || 'unidades'}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                return grupoHtml;
+            };
+            
+            // Renderizar cada grupo en orden específico
+            if (gruposMateriales.arandelas.length > 0) {
+                html += renderizarGrupo(gruposMateriales.arandelas, 'Arandelas', '#2ecc71', 'fa-circle-o');
+            }
+            
+            if (gruposMateriales.tornillos.length > 0) {
+                html += renderizarGrupo(gruposMateriales.tornillos, 'Tornillos', '#e74c3c', 'fa-arrow-right');
+            }
+            
+            if (gruposMateriales.tuercas.length > 0) {
+                html += renderizarGrupo(gruposMateriales.tuercas, 'Tuercas', '#3498db', 'fa-circle');
+            }
+            
+            if (gruposMateriales.otros.length > 0) {
+                html += renderizarGrupo(gruposMateriales.otros, 'Otros Materiales', '#95a5a6', 'fa-cube');
+            }
+        }
+    }
+    
+    if (tarea.herramientas && tarea.herramientas.length > 0) {
+        html += `
+            <h4 style="color: #34495e; margin-top: 25px; font-size: 1.2rem; margin-bottom: 15px;">
+                <i class="fas fa-tools"></i> Herramientas
+            </h4>
+        `;
+        
+        tarea.herramientas.forEach(herramienta => {
+            html += `
+                <div style="background: white; border: 1px solid #e1e8ed; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                    <strong style="color: #34495e;">${herramienta.nombre}</strong>
+                    <p style="margin: 5px 0; color: #666;">${herramienta.descripcion || 'Sin descripción'}</p>
+                </div>
+            `;
+        });
+    }
+    
+    html += `</div>`;
+    modalBody.innerHTML = html;
+}
+    
+    function eliminarTareaAdmin(nombre) {
+    if (!confirm(`¿Está seguro de que desea eliminar la tarea "${nombre}"?\nEsta acción no se puede deshacer.`)) {
+        return;
+    }
+    
+    try {
+        delete tareasGuardadas[nombre];
+        localStorage.setItem('tareasInstrucciones', JSON.stringify(tareasGuardadas));
+        
+        mostrarTareasAdmin();
+        actualizarContadorTareas();
+        mostrarToast(`🗑️ Tarea "${nombre}" eliminada`, 'error');
+        
+        // Actualizar automáticamente la sección de instrucciones si está visible
+        if (currentSection === 'instrucciones') {
+            mostrarInstruccionesGrid();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar tarea:', error);
+        mostrarToast('❌ Error al eliminar la tarea', 'error');
+    }
+}
+
+    // =============================================
+    // FUNCIONES PARA EL MODAL DE INSTRUCCIONES
+    // =============================================
+    function abrirModalInstrucciones() {
+      const tareaSeleccionada = document.getElementById('selTarea')?.value;
+      
+      if (!tareaSeleccionada) {
+        mostrarToast('Selecciona una tarea primero', 'warning');
+        return;
+      }
+      
+      const tareasGuardadas = JSON.parse(localStorage.getItem('tareasInstrucciones') || '{}');
+      const tarea = tareasGuardadas[tareaSeleccionada];
+      
+      if (!tarea) {
+        mostrarToast('No hay instrucciones disponibles para esta tarea', 'warning');
+        return;
+      }
+      
+      instruccionesActuales = tarea;
+      mostrarInformacionGeneral(tarea, tareaSeleccionada);
+      document.getElementById('modalInstrucciones').style.display = 'flex';
+    }
+    
+    function cerrarModalInstrucciones() {
+      document.getElementById('modalInstrucciones').style.display = 'none';
+      instruccionesActuales = null;
+    }
+
+    // =============================================
+    // FUNCIONES PARA PLANNER DE TAREAS
+    // =============================================
+    function inicializarPlanner() {
+      cargarTareasDesdePrincipal();
+      
+      const container = document.getElementById('plannerItemsContainer');
+      if (container && container.children.length === 0) {
+        agregarFilaPlanner();
+      }
+      
+      // Configurar filtro
+      const filtroTipo = document.getElementById('plannerFiltroTipo');
+      if (filtroTipo) {
+        filtroTipo.value = ''; // Resetear filtro
+      }
+    }
+
+    function agregarFilaPlanner() {
+      const container = document.getElementById('plannerItemsContainer');
+      if (!container) return;
+      
+      const id = 'planner-item-' + Date.now();
+      
+      // Crear opciones del select según el filtro actual
+      const filtroTipo = document.getElementById('plannerFiltroTipo')?.value || '';
+      let optionsHtml = '<option value="">— Selecciona tarea —</option>';
+      
+      Object.keys(tareasGuardadas)
+        .sort()
+        .filter(nombre => {
+          const tarea = tareasGuardadas[nombre];
+          if (!filtroTipo) return true;
+          return tarea && tarea.tipo === filtroTipo;
+        })
+        .forEach(nombre => {
+          const tarea = tareasGuardadas[nombre];
+          const tipo = tarea ? tarea.tipo : '';
+          optionsHtml += `<option value="${nombre.replace(/"/g, '&quot;')}">${nombre} (${tipo})</option>`;
+        });
+      
+      const html = `
+        <div id="${id}" class="planner-item-row">
+          <div class="planner-item-select">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary); font-size: 0.9rem;">Tarea</label>
+            <select style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">
+              ${optionsHtml}
+            </select>
+          </div>
+          
+          <div class="planner-item-boton">
+            <label style="display: block; margin-bottom: 5px; opacity: 0;">Eliminar</label>
+            <button type="button" class="btn-remove" onclick="eliminarFilaPlanner('${id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function eliminarFilaPlanner(id) {
+      const elemento = document.getElementById(id);
+      if (elemento) {
+        elemento.remove();
+      }
+      
+      // Si no quedan filas, agregar una por defecto
+      const container = document.getElementById('plannerItemsContainer');
+      if (container.children.length === 0) {
+        agregarFilaPlanner();
+      }
+    }
+
+    function filtrarTareasPlanner() {
+      // Limpiar todas las filas y volver a cargarlas con el nuevo filtro
+      const container = document.getElementById('plannerItemsContainer');
+      if (container) {
+        container.innerHTML = '';
+        agregarFilaPlanner();
+      }
+    }
+
+    function calcularMateriales() {
+      const filas = document.querySelectorAll('#plannerItemsContainer .planner-item-row');
+      const materialesAcumulados = {};
+      
+      filas.forEach(fila => {
+        const select = fila.querySelector('select');
+        const cantidadInput = fila.querySelector('input[type="number"]');
+        
+        const tareaNombre = select?.value;
+        const cantidad = parseInt(cantidadInput?.value) || 1;
+        
+        if (!tareaNombre) return;
+        
+        const tarea = tareasGuardadas[tareaNombre];
+        if (!tarea || !tarea.materiales || tarea.materiales.length === 0) return;
+        
+        tarea.materiales.forEach(material => {
+          const key = `${material.nombre}|${material.unidad || 'unidades'}|${material.descripcion || ''}`;
+          
+          if (materialesAcumulados[key]) {
+            materialesAcumulados[key].cantidad += material.cantidad * cantidad;
+          } else {
+            materialesAcumulados[key] = {
+              nombre: material.nombre,
+              descripcion: material.descripcion || '',
+              unidad: material.unidad || 'unidades',
+              cantidad: material.cantidad * cantidad,
+              original: material
+            };
+          }
+        });
+      });
+      
+      mostrarMaterialesAcumulados(materialesAcumulados);
+    }
+
+    function mostrarMaterialesAcumulados(materiales) {
+      const lista = document.getElementById('materialesAcumuladosLista');
+      const totalDiv = document.getElementById('totalMaterialesInfo');
+      
+      if (Object.keys(materiales).length === 0) {
+        lista.innerHTML = `
+          <div class="empty-state" style="padding: 30px 15px;">
+            <i class="fas fa-box-open"></i>
+            <h4>Sin materiales</h4>
+            <p>Selecciona tareas con materiales definidos</p>
+          </div>
+        `;
+        totalDiv.style.display = 'none';
+        return;
+      }
+      
+      let html = '';
+      let totalItems = 0;
+      
+      Object.values(materiales)
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .forEach(material => {
+          totalItems++;
+          html += `
+            <div class="material-item">
+              <div class="material-info">
+                <div class="material-nombre">${material.nombre}</div>
+                <div class="material-descripcion">${material.descripcion || 'Sin descripción'}</div>
+              </div>
+              <div class="material-cantidad">${material.cantidad} ${material.unidad}</div>
+            </div>
+          `;
+        });
+      
+      lista.innerHTML = html;
+      
+      const totalItemsSpan = document.getElementById('totalItemsCount');
+      if (totalItemsSpan) totalItemsSpan.textContent = totalItems;
+      totalDiv.style.display = 'flex';
+      
+      mostrarToast('📦 Materiales calculados correctamente', 'success');
+    }
+
+    function exportarPlannerExcel() {
+      try {
+        const filas = document.querySelectorAll('#plannerItemsContainer .planner-item-row');
+        let tareasSeleccionadas = [];
+        
+        filas.forEach(fila => {
+          const select = fila.querySelector('select');
+          const cantidadInput = fila.querySelector('input[type="number"]');
+          
+          const tareaNombre = select?.value;
+          const cantidad = parseInt(cantidadInput?.value) || 1;
+          
+          if (tareaNombre) {
+            tareasSeleccionadas.push(`${tareaNombre} x${cantidad}`);
+          }
+        });
+        
+        // Obtener materiales del cálculo
+        const materiales = document.querySelectorAll('#materialesAcumuladosLista .material-item');
+        let contenido = 'PLANNER DE MATERIALES\n\n';
+        contenido += 'Fecha: ' + new Date().toLocaleString() + '\n\n';
+        
+        if (tareasSeleccionadas.length > 0) {
+          contenido += 'TAREAS SELECCIONADAS:\n';
+          tareasSeleccionadas.forEach(t => contenido += `- ${t}\n`);
+          contenido += '\n';
+        }
+        
+        contenido += 'MATERIALES NECESARIOS:\n';
+        contenido += 'Nombre\tDescripción\tCantidad\tUnidad\n';
+        
+        let totalMateriales = 0;
+        materiales.forEach(material => {
+          const nombre = material.querySelector('.material-nombre')?.textContent || '';
+          const descripcion = material.querySelector('.material-descripcion')?.textContent || '';
+          const cantidadTexto = material.querySelector('.material-cantidad')?.textContent || '';
+          
+          // Separar cantidad y unidad
+          const partes = cantidadTexto.split(' ');
+          const cantidad = partes[0] || '';
+          const unidad = partes.slice(1).join(' ') || '';
+          
+          contenido += `${nombre}\t${descripcion}\t${cantidad}\t${unidad}\n`;
+          totalMateriales++;
+        });
+        
+        contenido += `\nTotal de materiales distintos: ${totalMateriales}`;
+        
+        // Crear y descargar archivo
+        const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `planner_materiales_${new Date().toISOString().slice(0,10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        mostrarToast('📊 Planner exportado correctamente', 'success');
+      } catch (error) {
+        console.error('Error al exportar:', error);
+        mostrarToast('❌ Error al exportar', 'error');
+      }
+    }
+
+    // =============================================
+    // INICIALIZACIÓN DE SECCIONES
+    // =============================================
+    function inicializarControlTiempo() {
+      const hoy = new Date().toISOString().slice(0,10);
+      const filtroFecha = document.getElementById('filtroFecha');
+      if (filtroFecha) filtroFecha.value = hoy;
+      
+      renderTabla();
+      restaurarTareaActiva();
+      
+      const selTipo = document.getElementById('selTipo');
+      if (selTipo && selTipo.value) {
+        fillTareasForTipo(selTipo.value);
+      }
+    }
+  
+  
+
+    // =============================================
+    // INICIALIZACIÓN DE LA APLICACIÓN
+    // =============================================
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Aplicación iniciada');
+      
+     // Guardar antes de cerrar/recargar la página
+window.addEventListener('beforeunload', guardarUltimaOperacion); 
+      
+      // Configurar navegación
+      const btnControlTiempo = document.getElementById('btnControlTiempo');
+      if (btnControlTiempo) {
+        btnControlTiempo.addEventListener('click', function() {
+          mostrarSeccion('control-tiempo');
+        });
+      }
+      
+      const btnInstruccionesSeccion = document.getElementById('btnInstruccionesSeccion');
+      if (btnInstruccionesSeccion) {
+        btnInstruccionesSeccion.addEventListener('click', function() {
+          mostrarSeccion('instrucciones');
+        });
+      }
+      
+      const btnAdminTareas = document.getElementById('btnAdminTareas');
+      if (btnAdminTareas) {
+        btnAdminTareas.addEventListener('click', function() {
+          mostrarSeccion('admin-tareas');
+        });
+      }
+      
+      const btnPlannerTareas = document.getElementById('btnPlannerTareas');
+      if (btnPlannerTareas) {
+        btnPlannerTareas.addEventListener('click', function() {
+          mostrarSeccion('planner-tareas');
+        });
+      }
+      
+      // Configurar Control de Tiempo
+      const selTipo = document.getElementById('selTipo');
+      if (selTipo) {
+        selTipo.addEventListener('change', function() {
+          fillTareasForTipo(this.value);
+        });
+      }
+      
+      const selTarea = document.getElementById('selTarea');
+      if (selTarea) {
+        selTarea.addEventListener('change', function() {
+          const tiempo = this.options[this.selectedIndex]?.getAttribute('data-tiempo');
+          if(tiempo) {
+            const inpTiempo = document.getElementById('inpTiempo');
+            if (inpTiempo) inpTiempo.value = tiempo;
+            
+            const minutosConvertidos = document.getElementById('minutosConvertidos');
+            if (minutosConvertidos) minutosConvertidos.textContent = convertDec(parseFloat(tiempo));
+          }
+          actualizarBotonInstrucciones();
+        });
+      }
+      
+      const inpTiempo = document.getElementById('inpTiempo');
+      if (inpTiempo) {
+        inpTiempo.addEventListener('input', function() {
+          const v = parseFloat(this.value);
+          const minutosConvertidos = document.getElementById('minutosConvertidos');
+          if (minutosConvertidos) {
+            minutosConvertidos.textContent = (!isNaN(v) && v>0) ? convertDec(v) : '00:00:00';
+          }
+        });
+      }
+      
+      // Botones principales de Control de Tiempo
+      const btnStart = document.getElementById('btnStart');
+      if (btnStart) btnStart.addEventListener('click', iniciarControlTiempo);
+      
+      const btnTerminar = document.getElementById('btnTerminar');
+      if (btnTerminar) btnTerminar.addEventListener('click', terminarControlTiempo);
+      
+      const btnReset = document.getElementById('btnReset');
+      if (btnReset) btnReset.addEventListener('click', reiniciarControlTiempo);
+      
+      const btnSilenciar = document.getElementById('btnSilenciar');
+      if (btnSilenciar) {
+        btnSilenciar.addEventListener('click', function() { 
+          silenciado = !silenciado;
+          this.innerHTML = silenciado ? '<i class="fas fa-volume-mute"></i> Silenciado' : '<i class="fas fa-volume-up"></i> Sonidos';
+          mostrarToast(silenciado ? '🔇 Silenciado' : '🔊 Sonidos activados', silenciado ? 'info' : 'success'); 
+        });
+      }
+      
+      const btnEstadisticas = document.getElementById('btnEstadisticas');
+      if (btnEstadisticas) {
+        btnEstadisticas.addEventListener('click', function() {
+          const hist = JSON.parse(localStorage.getItem('historial')||'[]');
+          alert(`📊 Total de tareas: ${hist.length}`);
+        });
+      }
+      
+      const btnExportExcel = document.getElementById('btnExportExcel');
+      if (btnExportExcel) {
+        btnExportExcel.addEventListener('click', function() {
+          mostrarToast('📊 Descargando Excel...', 'info');
+        });
+      }
+      
+      const btnResetTabla = document.getElementById('btnResetTabla');
+      if (btnResetTabla) {
+        btnResetTabla.addEventListener('click', function() {
+          if(confirm('¿Borrar todo el historial?')) {
+            localStorage.removeItem('historial');
+            renderTabla();
+            mostrarToast('🗑️ Histórico borrado', 'error');
+          }
+        });
+      }
+      
+      const btnVerInstrucciones = document.getElementById('btnVerInstrucciones');
+      if (btnVerInstrucciones) {
+        btnVerInstrucciones.addEventListener('click', abrirModalInstrucciones);
+      }
+      
+      // Configurar Admin de Tareas
+      const btnCargarPredeterminadas = document.getElementById('btnCargarPredeterminadas');
+      if (btnCargarPredeterminadas) {
+        btnCargarPredeterminadas.addEventListener('click', cargarTareasPredeterminadasAdmin);
+      }
+      
+      const btnIrControlTiempo = document.getElementById('btnIrControlTiempo');
+      if (btnIrControlTiempo) {
+        btnIrControlTiempo.addEventListener('click', function() {
+          mostrarSeccion('control-tiempo');
+        });
+      }
+      
+      const btnAddCritico = document.getElementById('btnAddCritico');
+      if (btnAddCritico) {
+        btnAddCritico.addEventListener('click', agregarCritico);
+      }
+      
+      const btnAddMaterial = document.getElementById('btnAddMaterial');
+      if (btnAddMaterial) {
+        btnAddMaterial.addEventListener('click', agregarMaterial);
+      }
+      
+      const btnAddHerramienta = document.getElementById('btnAddHerramienta');
+      if (btnAddHerramienta) {
+        btnAddHerramienta.addEventListener('click', agregarHerramienta);
+      }
+      
+      const btnGuardarTarea = document.getElementById('btnGuardarTarea');
+      if (btnGuardarTarea) {
+        btnGuardarTarea.addEventListener('click', guardarTareaAdmin);
+      }
+      
+      const btnLimpiarFormulario = document.getElementById('btnLimpiarFormulario');
+      if (btnLimpiarFormulario) {
+        btnLimpiarFormulario.addEventListener('click', limpiarFormularioAdmin);
+      }
+      
+      // Configurar búsqueda de instrucciones
+      const btnBuscarInstrucciones = document.getElementById('btnBuscarInstrucciones');
+      if (btnBuscarInstrucciones) {
+        btnBuscarInstrucciones.addEventListener('click', filtrarInstrucciones);
+      }
+      
+      const btnLimpiarBusqueda = document.getElementById('btnLimpiarBusqueda');
+      if (btnLimpiarBusqueda) {
+        btnLimpiarBusqueda.addEventListener('click', function() {
+          document.getElementById('searchInstrucciones').value = '';
+          document.getElementById('filterTipoInstrucciones').value = '';
+          filtrarInstrucciones();
+        });
+      }
+      
+      // Configurar modal de instrucciones
+      const closeModal = document.getElementById('closeModal');
+      if (closeModal) {
+        closeModal.addEventListener('click', cerrarModalInstrucciones);
+      }
+      
+      const modalInstrucciones = document.getElementById('modalInstrucciones');
+      if (modalInstrucciones) {
+        modalInstrucciones.addEventListener('click', function(e) {
+          if (e.target === this) {
+            cerrarModalInstrucciones();
+          }
+        });
+      }
+      
+      // Filtros de Control de Tiempo
+      const filtroFecha = document.getElementById('filtroFecha');
+      if (filtroFecha) {
+        filtroFecha.addEventListener('change', renderTabla);
+      }
+      
+      const filtroOperacion = document.getElementById('filtroOperacion');
+      if (filtroOperacion) {
+        filtroOperacion.addEventListener('input', renderTabla);
+      }
+      
+      const filtroLimpiar = document.getElementById('filtroLimpiar');
+      if (filtroLimpiar) {
+        filtroLimpiar.addEventListener('click', function() {
+          const filtroFecha = document.getElementById('filtroFecha');
+          if (filtroFecha) filtroFecha.value = '';
+          
+          const filtroOperacion = document.getElementById('filtroOperacion');
+          if (filtroOperacion) filtroOperacion.value = '';
+          
+          renderTabla();
+          mostrarToast('🧹 Filtros limpiados', 'info');
+        });
+      }
+      
+      // Restaurar número de operación guardado
+restaurarUltimaOperacion();
+
+// Botón para limpiar operación
+const btnLimpiarOperacion = document.getElementById('btnLimpiarOperacion');
+if (btnLimpiarOperacion) {
+    btnLimpiarOperacion.addEventListener('click', limpiarOperacion);
+}
+
+// Guardar automáticamente cuando se escribe (opcional)
+const inpOperacion = document.getElementById('inpOperacion');
+if (inpOperacion) {
+    inpOperacion.addEventListener('input', guardarUltimaOperacion);
+}
+      
+      // Configurar Planner
+      const btnAgregarFilaPlanner = document.getElementById('btnAgregarFilaPlanner');
+      if (btnAgregarFilaPlanner) {
+        btnAgregarFilaPlanner.addEventListener('click', agregarFilaPlanner);
+      }
+      
+      const btnCalcularMateriales = document.getElementById('btnCalcularMateriales');
+      if (btnCalcularMateriales) {
+        btnCalcularMateriales.addEventListener('click', calcularMateriales);
+      }
+      
+      const btnExportPlannerExcel = document.getElementById('btnExportPlannerExcel');
+      if (btnExportPlannerExcel) {
+        btnExportPlannerExcel.addEventListener('click', exportarPlannerExcel);
+      }
+      
+      const plannerFiltroTipo = document.getElementById('plannerFiltroTipo');
+      if (plannerFiltroTipo) {
+        plannerFiltroTipo.addEventListener('change', filtrarTareasPlanner);
+      }
+      
+      // Inicializar Control de Tiempo por defecto
+      inicializarControlTiempo();
+      
+      setTimeout(() => {
+        mostrarToast('🚀 Sistema cargado correctamente. ¡Bienvenido!', 'success');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
